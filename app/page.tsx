@@ -5,6 +5,7 @@ import Coursework from "@/components/Coursework";
 import CampusOrganizations from "@/components/CampusOrganizations";
 import Projects from "@/components/Projects";
 import Contact from "@/components/Contact";
+import VisitCounter from "@/components/VisitCounter";
 
 export default function Home() {
   return (
@@ -17,6 +18,7 @@ export default function Home() {
         <Projects />
         <Teaching />
         <Contact />
+        <VisitCounter />
       </div>
     </main>
   );
