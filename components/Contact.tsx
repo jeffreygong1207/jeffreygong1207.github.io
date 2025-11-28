@@ -11,32 +11,32 @@ export default function Contact() {
             <p>
               <span className="font-semibold">Email:</span>{" "}
               <a
-                href="mailto:your.email@example.com"
+                href="mailto:jeffreygong@berkeley.edu"
                 className="text-gray-700 hover:text-gray-900 underline"
               >
-                your.email@example.com
+                jeffreygong@berkeley.edu
               </a>
             </p>
             <p>
               <span className="font-semibold">GitHub:</span>{" "}
               <a
-                href="https://github.com/yourusername"
+                href="https://github.com/jeffreygong1207"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-gray-700 hover:text-gray-900 underline"
               >
-                github.com/yourusername
+                github.com/jeffreygong1207
               </a>
             </p>
             <p>
               <span className="font-semibold">LinkedIn:</span>{" "}
               <a
-                href="https://linkedin.com/in/yourusername"
+                href="https://www.linkedin.com/in/jeffreygongla/"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-gray-700 hover:text-gray-900 underline"
               >
-                linkedin.com/in/yourusername
+                linkedin.com/in/jeffreygongla
               </a>
             </p>
           </div>

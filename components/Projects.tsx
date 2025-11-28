@@ -5,34 +5,46 @@ import Image from "next/image";
 export default function Projects() {
   const projects = [
     {
-      title: "Project Title 1",
-      description: "A brief description of the project, what it does, and the technologies used. This project demonstrates skills in web development and user interface design.",
-      technologies: ["React", "TypeScript", "Node.js"],
+      title: "Secure File Sharing System",
+      description: "Built an end-to-end encrypted file sharing system with secure storage, access control, and revocation across untrusted infrastructure. Worked on user authentication, per-file encryption, and key-management logic. Implemented fine-grained sharing and revocation semantics for hierarchical sharing.",
+      technologies: [],
       image: "/images/project1.jpg",
-      links: {
-        github: "https://github.com/yourusername/project1",
-        demo: "https://project1-demo.com",
-      },
+      links: {},
     },
     {
-      title: "Project Title 2",
-      description: "Another project description highlighting key features and accomplishments. This project showcases expertise in machine learning and data analysis.",
-      technologies: ["Python", "TensorFlow", "Pandas"],
+      title: "BetterUp",
+      description: "Engineered an automated content auditing system reducing auditing time by 95% (from 3+ weeks to 2-4 hours) across 5,000+ courses, and implemented a scalable dashboard platform using React and Next.js for visualizing coach activity and generating performance metrics.",
+      technologies: ["React", "Next.js", "Python", "Pandas", "AWS EC2", "Vercel", "Firebase"],
       image: "/images/project2.jpg",
-      links: {
-        github: "https://github.com/yourusername/project2",
-        paper: "https://arxiv.org/abs/xxxx.xxxxx",
-      },
+      links: {},
     },
     {
-      title: "Project Title 3",
-      description: "A third project that demonstrates different skills and technologies. This could be a mobile app, a research project, or a web application.",
-      technologies: ["Next.js", "PostgreSQL", "Docker"],
+      title: "Clearway Energy",
+      description: "Automated energy production data verification resulting in a 30% increase in processing efficiency, engineered a scalable data processing platform for 200k+ records, and developed ETL pipelines for 2000+ customers.",
+      technologies: ["Python", "SQL", "Pandas", "Power BI"],
       image: "/images/project3.jpg",
-      links: {
-        github: "https://github.com/yourusername/project3",
-        demo: "https://project3-demo.com",
-      },
+      links: {},
+    },
+    {
+      title: "BerkeleyTime",
+      description: "Architected real-time enrollment system using WebSockets and UCB API, implementing data caching with 30k+ users, developed fuzzy search functionality with vector database integration and built ML course recommendation engine.",
+      technologies: ["Docker", "TypeScript", "Python", "Redis"],
+      image: "/images/project4.jpg",
+      links: {},
+    },
+    {
+      title: "Posthuman",
+      description: "Engineered full-stack asset management system, fine-tuning Mistral models for OCR on financial analysis and custom chat, built agent automation with LangChain and implemented Ethereum/EigenLayer validation for secure asset management.",
+      technologies: ["TypeScript", "LangChain", "Flask"],
+      image: "/images/project5.jpg",
+      links: {},
+    },
+    {
+      title: "AI-SL",
+      description: "Developed a real-time ASL video generation platform (web app & Chrome extension) to enhance language accessibility, implemented an ML pipeline for animation via vector search (Supabase) and real-time pose extraction (MediaPipe).",
+      technologies: ["Python", "React", "MediaPipe", "Supabase"],
+      image: "/images/project6.jpg",
+      links: {},
     },
   ];
 

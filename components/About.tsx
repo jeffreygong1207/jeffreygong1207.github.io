@@ -6,22 +6,30 @@ export default function About() {
       <div className="max-w-4xl mx-auto px-6 md:px-8">
         <div className="flex flex-col md:flex-row gap-8 items-start">
           <div className="flex-1 order-2 md:order-1">
-            <h1 className="text-2xl md:text-3xl font-bold mb-4">Your Name</h1>
+            <h1 className="text-2xl md:text-3xl font-bold mb-4">
+              Jeffrey Gong
+            </h1>
             <p className="text-lg mb-4">
-              I am a [position/status] at [Institution]. My research/work focuses on [research interests or work focus].
+              I am a third year student at UC Berkeley studing EECS and Business
+              in the Management Entreprenuership and Technology Program
+              (M.E.T.). My interested are in Distributed Systems, ML/AI and
+              various fields within software engineering. Always interested in
+              working on challenging problems within the field.
             </p>
             <p className="mb-4">
-              Previously, I [previous experience or education]. I am interested in [interests].
+              I'm currently working on ML evaluation and benchmarking at the Sky
+              Computing Lab. Feel free to reach out -- I love meeting new
+              people!
             </p>
             <div className="flex flex-wrap gap-4 mt-6">
               <a
-                href="mailto:your.email@example.com"
+                href="mailto:jeffreygong@berkeley.edu"
                 className="text-gray-700 hover:text-gray-900 underline decoration-gray-300 hover:decoration-gray-500"
               >
                 Email
               </a>
               <a
-                href="https://github.com/yourusername"
+                href="https://github.com/jeffreygong1207"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-gray-700 hover:text-gray-900 underline decoration-gray-300 hover:decoration-gray-500"
@@ -29,7 +37,7 @@ export default function About() {
                 GitHub
               </a>
               <a
-                href="https://linkedin.com/in/yourusername"
+                href="https://www.linkedin.com/in/jeffreygongla/"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-gray-700 hover:text-gray-900 underline decoration-gray-300 hover:decoration-gray-500"
