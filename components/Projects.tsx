@@ -2,8 +2,22 @@
 
 import Image from "next/image";
 
+interface ProjectLinks {
+  github?: string;
+  demo?: string;
+  paper?: string;
+}
+
+interface Project {
+  title: string;
+  description: string;
+  technologies: string[];
+  image: string;
+  links: ProjectLinks;
+}
+
 export default function Projects() {
-  const projects = [
+  const projects: Project[] = [
     {
       title: "AI-SL",
       description: "Real-time ASL video generation platform (web app & Chrome extension) for language accessibility. Worked on ML pipeline for animation via vector search and real-time pose extraction.",
