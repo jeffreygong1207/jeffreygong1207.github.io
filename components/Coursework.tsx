@@ -74,18 +74,21 @@ export default function Coursework() {
       <div className="max-w-4xl mx-auto px-6 md:px-8">
         <h2 className="text-xl md:text-2xl font-bold mb-6">Coursework</h2>
         <div className="space-y-6">
-          {coursework.map((semester, index) => (
-            <div key={index}>
-              <h3 className="text-lg font-semibold mb-2">
-                {semester.semester}
-              </h3>
-              <div className="space-y-0.5 text-gray-700">
-                {semester.courses.map((course, courseIndex) => (
-                  <div key={courseIndex}>{course}</div>
-                ))}
+          {coursework
+            .slice()
+            .reverse()
+            .map((semester, index) => (
+              <div key={index}>
+                <h3 className="text-lg font-semibold mb-2">
+                  {semester.semester}
+                </h3>
+                <div className="space-y-0.5 text-gray-700">
+                  {semester.courses.map((course, courseIndex) => (
+                    <div key={courseIndex}>{course}</div>
+                  ))}
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
         </div>
       </div>
     </section>

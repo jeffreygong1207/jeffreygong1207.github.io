@@ -20,7 +20,7 @@ export default function About() {
               >
                 Management Entrepreneurship and Technology Program (M.E.T.)
               </a>
-              . My interested are in Distributed Systems, ML/AI and various
+              . My interests are in Distributed Systems, ML/AI and various
               fields within software engineering. Always interested in working
               on challenging problems within the field.
             </p>
