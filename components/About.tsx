@@ -11,20 +11,35 @@ export default function About() {
             </h1>
             <p className="text-lg mb-4">
               I am a third year student at UC Berkeley studing EECS and Business
-              in the Management Entreprenuership and Technology Program
-              (M.E.T.). My interested are in Distributed Systems, ML/AI and
-              various fields within software engineering. Always interested in
-              working on challenging problems within the field.
+              in the{" "}
+              <a
+                href="https://met.berkeley.edu/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 hover:text-blue-800"
+              >
+                Management Entrepreneurship and Technology Program (M.E.T.)
+              </a>
+              . My interested are in Distributed Systems, ML/AI and various
+              fields within software engineering. Always interested in working
+              on challenging problems within the field.
             </p>
             <p className="mb-4">
-              I'm currently working on ML evaluation and benchmarking at the Sky
-              Computing Lab. Feel free to reach out -- I love meeting new
-              people!
+              I'm currently working on ML evaluation and benchmarking at the{" "}
+              <a
+                href="https://sky.cs.berkeley.edu/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 hover:text-blue-800"
+              >
+                Sky Computing Lab
+              </a>
+              . Feel free to reach out -- I love meeting new people!
             </p>
             <div className="flex flex-wrap gap-4 mt-6">
               <a
                 href="mailto:jeffreygong@berkeley.edu"
-                className="text-gray-700 hover:text-gray-900 underline decoration-gray-300 hover:decoration-gray-500"
+                className="text-blue-600 hover:text-blue-800"
               >
                 Email
               </a>
@@ -32,7 +47,7 @@ export default function About() {
                 href="https://github.com/jeffreygong1207"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-gray-700 hover:text-gray-900 underline decoration-gray-300 hover:decoration-gray-500"
+                className="text-blue-600 hover:text-blue-800"
               >
                 GitHub
               </a>
@@ -40,15 +55,9 @@ export default function About() {
                 href="https://www.linkedin.com/in/jeffreygongla/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-gray-700 hover:text-gray-900 underline decoration-gray-300 hover:decoration-gray-500"
+                className="text-blue-600 hover:text-blue-800"
               >
                 LinkedIn
-              </a>
-              <a
-                href="/resume.pdf"
-                className="text-gray-700 hover:text-gray-900 underline decoration-gray-300 hover:decoration-gray-500"
-              >
-                Resume
               </a>
             </div>
           </div>

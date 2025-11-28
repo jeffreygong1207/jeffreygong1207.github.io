@@ -3,22 +3,27 @@ export default function CampusOrganizations() {
     {
       name: "HKN (EECS Honor Society)",
       role: "Member",
+      link: "https://hkn.eecs.berkeley.edu/",
     },
     {
       name: "CSM (Computer Science Mentors)",
       role: "Mentor",
+      link: "https://csmentors.studentorg.berkeley.edu/#/",
     },
     {
       name: "Venture Strategy Solutions",
       role: "Project Manager",
+      link: "https://www.berkeleyvss.com/",
     },
     {
       name: "BerkeleyTime",
       role: "Developer",
+      link: "https://beta.berkeleytime.com/",
     },
     {
-      name: "CS 70 Course Staff",
-      role: "Course Staff",
+      name: "Open Innovation Squad",
+      role: "Member",
+      link: "https://haas.berkeley.edu/open-innovation/",
     },
   ];
 
@@ -37,7 +42,18 @@ export default function CampusOrganizations() {
               key={index}
               className="flex flex-col md:flex-row md:items-baseline"
             >
-              <span className="font-medium text-gray-900">{org.name}</span>
+              {org.link ? (
+                <a
+                  href={org.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-medium text-blue-600 hover:text-blue-800"
+                >
+                  {org.name}
+                </a>
+              ) : (
+                <span className="font-medium text-gray-900">{org.name}</span>
+              )}
               {org.role && (
                 <span className="text-gray-600 md:ml-2">{org.role}</span>
               )}

@@ -5,45 +5,65 @@ import Image from "next/image";
 export default function Projects() {
   const projects = [
     {
+      title: "AI-SL",
+      description: "Real-time ASL video generation platform (web app & Chrome extension) for language accessibility. Worked on ML pipeline for animation via vector search and real-time pose extraction.",
+      technologies: ["Python", "React", "MediaPipe", "Supabase"],
+      image: "/images/ai-sl.jpg",
+      links: {
+        github: "https://github.com/deenasun/ai-sl/tree/main",
+      },
+    },
+    {
+      title: "Posthuman",
+      description: "Full-stack asset management system with Mistral models for OCR and financial analysis. Built agent automation with LangChain and Ethereum/EigenLayer validation.",
+      technologies: ["TypeScript", "LangChain", "Flask"],
+      image: "/images/posthuman.jpg",
+      links: {
+        github: "https://github.com/r-agni/posthuman",
+      },
+    },
+    {
       title: "Secure File Sharing System",
-      description: "Built an end-to-end encrypted file sharing system with secure storage, access control, and revocation across untrusted infrastructure. Worked on user authentication, per-file encryption, and key-management logic. Implemented fine-grained sharing and revocation semantics for hierarchical sharing.",
+      description: "End-to-end encrypted file sharing system with secure storage, access control, and revocation. Worked on user authentication, per-file encryption, and key-management logic.",
       technologies: [],
-      image: "/images/project1.jpg",
-      links: {},
-    },
-    {
-      title: "BetterUp",
-      description: "Engineered an automated content auditing system reducing auditing time by 95% (from 3+ weeks to 2-4 hours) across 5,000+ courses, and implemented a scalable dashboard platform using React and Next.js for visualizing coach activity and generating performance metrics.",
-      technologies: ["React", "Next.js", "Python", "Pandas", "AWS EC2", "Vercel", "Firebase"],
-      image: "/images/project2.jpg",
-      links: {},
-    },
-    {
-      title: "Clearway Energy",
-      description: "Automated energy production data verification resulting in a 30% increase in processing efficiency, engineered a scalable data processing platform for 200k+ records, and developed ETL pipelines for 2000+ customers.",
-      technologies: ["Python", "SQL", "Pandas", "Power BI"],
-      image: "/images/project3.jpg",
+      image: "/images/secure-file-sharing.jpg",
       links: {},
     },
     {
       title: "BerkeleyTime",
-      description: "Architected real-time enrollment system using WebSockets and UCB API, implementing data caching with 30k+ users, developed fuzzy search functionality with vector database integration and built ML course recommendation engine.",
+      description: "Real-time enrollment system using WebSockets and UCB API with data caching. Developed fuzzy search functionality and ML course recommendation engine.",
       technologies: ["Docker", "TypeScript", "Python", "Redis"],
-      image: "/images/project4.jpg",
+      image: "/images/berkeleytime.jpg",
       links: {},
     },
     {
-      title: "Posthuman",
-      description: "Engineered full-stack asset management system, fine-tuning Mistral models for OCR on financial analysis and custom chat, built agent automation with LangChain and implemented Ethereum/EigenLayer validation for secure asset management.",
-      technologies: ["TypeScript", "LangChain", "Flask"],
-      image: "/images/project5.jpg",
+      title: "BetterUp",
+      description: "Automated content auditing system and scalable dashboard platform for visualizing coach activity and generating performance metrics.",
+      technologies: ["React", "Next.js", "Python", "Pandas", "AWS EC2", "Vercel", "Firebase"],
+      image: "/images/betterup.jpg",
       links: {},
     },
     {
-      title: "AI-SL",
-      description: "Developed a real-time ASL video generation platform (web app & Chrome extension) to enhance language accessibility, implemented an ML pipeline for animation via vector search (Supabase) and real-time pose extraction (MediaPipe).",
-      technologies: ["Python", "React", "MediaPipe", "Supabase"],
-      image: "/images/project6.jpg",
+      title: "Impression",
+      description: "iPad app that predicts early onset dementia by analyzing drawing motions. Worked on machine learning algorithms to analyze touch sensor data.",
+      technologies: ["Swift", "FastAPI", "Amazon Web Services", "Uvicorn"],
+      image: "/images/impression.jpg",
+      links: {
+        github: "https://github.com/oliver-yangluo-chen/Impression",
+      },
+    },
+    {
+      title: "Clearway Energy",
+      description: "Automated energy production data verification and scalable data processing platform. Developed ETL pipelines for customers.",
+      technologies: ["Python", "SQL", "Pandas", "Power BI"],
+      image: "/images/clearway.jpg",
+      links: {},
+    },
+    {
+      title: "NASA Techrise Challenge - ORBS",
+      description: "Worked on CS portions of NASA Techrise Challenge winning project. Programmed M4 Metro Microcontroller using C++ to control LED lighting and cameras for monitoring biodegradable pods during suborbital flight.",
+      technologies: ["C++", "Microcontroller Programming"],
+      image: "/images/nasa-orbs.jpg",
       links: {},
     },
   ];
@@ -52,10 +72,10 @@ export default function Projects() {
     <section id="projects" className="py-12 border-t border-gray-200">
       <div className="max-w-4xl mx-auto px-6 md:px-8">
         <h2 className="text-xl md:text-2xl font-bold mb-6">Projects</h2>
-        <div className="space-y-8">
+        <div className="space-y-4">
           {projects.map((project, index) => (
-            <div key={index} className="flex flex-col md:flex-row gap-6">
-              <div className="flex-shrink-0 w-full md:w-48 h-32 relative bg-gray-100 rounded border border-gray-200 overflow-hidden flex items-center justify-center">
+            <div key={index} className="flex flex-col md:flex-row gap-4">
+              <div className="flex-shrink-0 w-full md:w-32 h-24 relative bg-gray-100 rounded border border-gray-200 overflow-hidden flex items-center justify-center">
                 <Image
                   src={project.image}
                   alt={project.title}
@@ -69,9 +89,9 @@ export default function Projects() {
                 <span className="text-gray-400 text-xs hidden">Image placeholder</span>
               </div>
               <div className="flex-1">
-                <h3 className="text-lg font-semibold mb-2">{project.title}</h3>
-                <p className="text-gray-700 mb-3">{project.description}</p>
-                <div className="flex flex-wrap gap-2 mb-3">
+                <h3 className="text-base font-semibold mb-1">{project.title}</h3>
+                <p className="text-gray-700 text-sm mb-2">{project.description}</p>
+                <div className="flex flex-wrap gap-2 mb-2">
                   {project.technologies.map((tech, techIndex) => (
                     <span
                       key={techIndex}
@@ -87,7 +107,7 @@ export default function Projects() {
                       href={project.links.github}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-gray-700 hover:text-gray-900 underline text-sm"
+                      className="text-blue-600 hover:text-blue-800 text-sm"
                     >
                       GitHub
                     </a>
@@ -97,7 +117,7 @@ export default function Projects() {
                       href={project.links.demo}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-gray-700 hover:text-gray-900 underline text-sm"
+                      className="text-blue-600 hover:text-blue-800 text-sm"
                     >
                       Demo
                     </a>
@@ -107,7 +127,7 @@ export default function Projects() {
                       href={project.links.paper}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-gray-700 hover:text-gray-900 underline text-sm"
+                      className="text-blue-600 hover:text-blue-800 text-sm"
                     >
                       Paper
                     </a>

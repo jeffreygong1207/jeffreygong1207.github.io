@@ -5,14 +5,15 @@ export default function Contact() {
         <h2 className="text-xl md:text-2xl font-bold mb-6">Contact</h2>
         <div className="space-y-4">
           <p className="text-gray-700">
-            Feel free to reach out if you'd like to collaborate or have any questions.
+            Feel free to reach out if you have any questions or just want to
+            chat!
           </p>
           <div className="space-y-2">
             <p>
               <span className="font-semibold">Email:</span>{" "}
               <a
                 href="mailto:jeffreygong@berkeley.edu"
-                className="text-gray-700 hover:text-gray-900 underline"
+                className="text-blue-600 hover:text-blue-800"
               >
                 jeffreygong@berkeley.edu
               </a>
@@ -23,7 +24,7 @@ export default function Contact() {
                 href="https://github.com/jeffreygong1207"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-gray-700 hover:text-gray-900 underline"
+                className="text-blue-600 hover:text-blue-800"
               >
                 github.com/jeffreygong1207
               </a>
@@ -34,7 +35,7 @@ export default function Contact() {
                 href="https://www.linkedin.com/in/jeffreygongla/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-gray-700 hover:text-gray-900 underline"
+                className="text-blue-600 hover:text-blue-800"
               >
                 linkedin.com/in/jeffreygongla
               </a>

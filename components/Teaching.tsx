@@ -2,6 +2,7 @@ export default function Teaching() {
   const teaching = [
     "CSM for CS 70, Fall 2024",
     "CSM for CS 61B, Spring 2025",
+    "Tutor for CS 70, Summer 2025",
   ];
 
   return (

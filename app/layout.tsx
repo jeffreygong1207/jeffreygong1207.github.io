@@ -2,8 +2,15 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Personal Website",
+  title: "Jeffrey Gong",
   description: "Personal website showcasing coursework, experience, projects, and contact information",
+  icons: {
+    icon: "/favicon.svg",
+  },
+  robots: {
+    index: false,
+    follow: false,
+  },
 };
 
 export default function RootLayout({

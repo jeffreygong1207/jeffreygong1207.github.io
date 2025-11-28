@@ -1,7 +1,6 @@
 import About from "@/components/About";
 import Experience from "@/components/Experience";
 import Teaching from "@/components/Teaching";
-import Research from "@/components/Research";
 import Coursework from "@/components/Coursework";
 import CampusOrganizations from "@/components/CampusOrganizations";
 import Projects from "@/components/Projects";
@@ -17,7 +16,6 @@ export default function Home() {
         <CampusOrganizations />
         <Projects />
         <Teaching />
-        <Research />
         <Contact />
       </div>
     </main>
