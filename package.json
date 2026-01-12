@@ -12,23 +12,22 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/jeffreygong1207/personal-website.git"
+    "url": "git+https://github.com/jeffreygong1207/jeffreygong1207.github.io.git"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/jeffreygong1207/personal-website/issues"
+    "url": "https://github.com/jeffreygong1207/jeffreygong1207.github.io/issues"
   },
-  "homepage": "https://github.com/jeffreygong1207/personal-website#readme",
+  "homepage": "https://jeffreygong1207.github.io",
   "dependencies": {
     "@tailwindcss/postcss": "^4.1.17",
     "@types/node": "^24.10.1",
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
-    "@vercel/analytics": "^1.5.0",
     "autoprefixer": "^10.4.22",
-    "next": "^16.0.5",
+    "next": "16.0.10",
     "postcss": "^8.5.6",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
