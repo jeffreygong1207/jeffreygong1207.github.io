@@ -6,12 +6,12 @@ export default function Teaching() {
   ];
 
   return (
-    <section id="teaching" className="py-12 border-t border-gray-200">
+    <section id="teaching" className="py-12 border-t border-gray-200 dark:border-gray-700">
       <div className="max-w-4xl mx-auto px-6 md:px-8">
-        <h2 className="text-xl md:text-2xl font-bold mb-6">Teaching</h2>
+        <h2 className="text-xl md:text-2xl font-bold mb-6 text-gray-900">Teaching</h2>
         <div className="space-y-2">
           {teaching.map((item, index) => (
-            <p key={index} className="text-gray-700">{item}</p>
+            <p key={index} className="text-gray-900">{item}</p>
           ))}
         </div>
       </div>

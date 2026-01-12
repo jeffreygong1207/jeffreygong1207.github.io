@@ -70,19 +70,19 @@ export default function Coursework() {
   ];
 
   return (
-    <section id="coursework" className="py-12 border-t border-gray-200">
+    <section id="coursework" className="py-12 border-t border-gray-200 dark:border-gray-700">
       <div className="max-w-4xl mx-auto px-6 md:px-8">
-        <h2 className="text-xl md:text-2xl font-bold mb-6">Coursework</h2>
+        <h2 className="text-xl md:text-2xl font-bold mb-6 text-gray-900">Coursework</h2>
         <div className="space-y-6">
           {coursework
             .slice()
             .reverse()
             .map((semester, index) => (
               <div key={index}>
-                <h3 className="text-lg font-semibold mb-2">
+                <h3 className="text-lg font-semibold mb-2 text-gray-900">
                   {semester.semester}
                 </h3>
-                <div className="space-y-0.5 text-gray-700">
+                <div className="space-y-0.5 text-gray-900">
                   {semester.courses.map((course, courseIndex) => (
                     <div key={courseIndex}>{course}</div>
                   ))}

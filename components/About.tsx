@@ -6,10 +6,10 @@ export default function About() {
       <div className="max-w-4xl mx-auto px-6 md:px-8">
         <div className="flex flex-col md:flex-row gap-8 items-start">
           <div className="flex-1 order-2 md:order-1">
-            <h1 className="text-2xl md:text-3xl font-bold mb-4">
+            <h1 className="text-2xl md:text-3xl font-bold mb-4 text-gray-900">
               Jeffrey Gong
             </h1>
-            <p className="text-lg mb-4">
+            <p className="text-lg mb-4 text-gray-900">
               I am a third year student at UC Berkeley studing EECS and Business
               in the{" "}
               <a
@@ -24,7 +24,7 @@ export default function About() {
               fields within software engineering. Always interested in working
               on challenging problems within the field.
             </p>
-            <p className="mb-4">
+            <p className="mb-4 text-gray-900">
               I'm currently working on ML evaluation and benchmarking at the{" "}
               <a
                 href="https://sky.cs.berkeley.edu/"
@@ -34,7 +34,10 @@ export default function About() {
               >
                 Sky Computing Lab
               </a>
-              . Feel free to reach out -- I love meeting new people!
+              .
+            </p>
+            <p className="mb-4 text-gray-900">
+              Feel free to reach out -- I love meeting new people!
             </p>
             <div className="flex flex-wrap gap-4 mt-6">
               <a

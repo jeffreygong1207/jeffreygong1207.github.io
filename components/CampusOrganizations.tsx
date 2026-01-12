@@ -30,10 +30,10 @@ export default function CampusOrganizations() {
   return (
     <section
       id="campus-organizations"
-      className="py-12 border-t border-gray-200"
+      className="py-12 border-t border-gray-200 dark:border-gray-700"
     >
       <div className="max-w-4xl mx-auto px-6 md:px-8">
-        <h2 className="text-xl md:text-2xl font-bold mb-6">
+        <h2 className="text-xl md:text-2xl font-bold mb-6 text-gray-900">
           Campus Organizations
         </h2>
         <div className="space-y-2">
@@ -55,7 +55,7 @@ export default function CampusOrganizations() {
                 <span className="font-medium text-gray-900">{org.name}</span>
               )}
               {org.role && (
-                <span className="text-gray-600 md:ml-2">{org.role}</span>
+                <span className="text-gray-900 md:ml-2">{org.role}</span>
               )}
             </div>
           ))}

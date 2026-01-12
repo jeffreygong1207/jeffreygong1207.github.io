@@ -1,15 +1,15 @@
 export default function Contact() {
   return (
-    <section id="contact" className="py-12 border-t border-gray-200">
+    <section id="contact" className="py-12 border-t border-gray-200 dark:border-gray-700">
       <div className="max-w-4xl mx-auto px-6 md:px-8">
-        <h2 className="text-xl md:text-2xl font-bold mb-6">Contact</h2>
+        <h2 className="text-xl md:text-2xl font-bold mb-6 text-gray-900">Contact</h2>
         <div className="space-y-4">
-          <p className="text-gray-700">
+          <p className="text-gray-900">
             Feel free to reach out if you have any questions or just want to
             chat!
           </p>
           <div className="space-y-2">
-            <p>
+            <p className="text-gray-900">
               <span className="font-semibold">Email:</span>{" "}
               <a
                 href="mailto:jeffreygong@berkeley.edu"
@@ -18,7 +18,7 @@ export default function Contact() {
                 jeffreygong@berkeley.edu
               </a>
             </p>
-            <p>
+            <p className="text-gray-900">
               <span className="font-semibold">GitHub:</span>{" "}
               <a
                 href="https://github.com/jeffreygong1207"
@@ -29,7 +29,7 @@ export default function Contact() {
                 github.com/jeffreygong1207
               </a>
             </p>
-            <p>
+            <p className="text-gray-900">
               <span className="font-semibold">LinkedIn:</span>{" "}
               <a
                 href="https://www.linkedin.com/in/jeffreygongla/"
