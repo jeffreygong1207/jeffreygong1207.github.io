@@ -10,8 +10,7 @@ export default function About() {
               Jeffrey Gong
             </h1>
             <p className="text-lg mb-4 text-gray-900">
-              I am a third year student at UC Berkeley studing EECS and Business
-              in the{" "}
+              I am a student at UC Berkeley studing EECS and Business in the{" "}
               <a
                 href="https://met.berkeley.edu/"
                 target="_blank"
