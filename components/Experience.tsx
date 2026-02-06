@@ -1,6 +1,11 @@
 export default function Experience() {
   const experiences = [
     {
+      organization: "Stripe",
+      position: "Incoming Software Engineering Intern",
+      date: "2026",
+    },
+    {
       organization: "Snowflake",
       position: "Software Engineering Intern",
       date: "Fall 2025",
