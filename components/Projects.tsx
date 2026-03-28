@@ -19,6 +19,15 @@ interface Project {
 export default function Projects() {
   const projects: Project[] = [
     {
+      title: "TickerMaster",
+      description: "Educational financial AI sandbox built at TreeHacks 2026 for retail traders to research and simulate strategies before placing real trades. Features multi-agent trading arena where AI personas react to volatility and narrative shifts, AI-powered catalyst synthesis with social sentiment analysis, and a 24/7 AI broker avatar for watchlist monitoring.",
+      technologies: ["React", "TypeScript", "FastAPI", "Supabase", "Modal", "Perplexity", "OpenAI", "HeyGen"],
+      image: "/images/tickermaster.jpg",
+      links: {
+        demo: "https://devpost.com/software/tickermaster",
+      },
+    },
+    {
       title: "AI-SL",
       description: "Real-time ASL video generation platform (web app & Chrome extension) for language accessibility. Worked on ML pipeline for animation via vector search and real-time pose extraction.",
       technologies: ["Python", "React", "MediaPipe", "Supabase"],
