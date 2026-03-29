@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import "./globals.css";
 import Navigation from "@/components/Navigation";
 
@@ -22,17 +23,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        <script
-          suppressHydrationWarning
-          dangerouslySetInnerHTML={{
-            __html: `
-              (function() {
-                // Force light mode - always remove dark class
-                document.documentElement.classList.remove('dark');
-              })();
-            `,
-          }}
-        />
+        <Script strategy="beforeInteractive">{`document.documentElement.classList.remove('dark');`}</Script>
       </head>
       <body className="bg-white text-gray-900 antialiased font-sans leading-relaxed">
         <Navigation />
