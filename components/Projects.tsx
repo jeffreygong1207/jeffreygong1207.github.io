@@ -19,6 +19,16 @@ interface Project {
 export default function Projects() {
   const projects: Project[] = [
     {
+      title: "Restauranty",
+      description: "Full-stack reservation platform built at LA Hacks 2026 to help restaurants minimize no-shows and recover empty tables. Features no-show risk scoring, verified waitlists, and role-based dashboards for restaurants and diners.",
+      technologies: ["Next.js", "TypeScript", "MongoDB", "Auth0", "Claude AI", "Twilio", "Tailwind CSS", "Vercel"],
+      image: "/images/restauranty.png",
+      links: {
+        github: "https://github.com/jeffreygong1207/restauranty",
+        demo: "https://devpost.com/software/restauranty",
+      },
+    },
+    {
       title: "TickerMaster",
       description: "Educational financial AI sandbox for retail traders to research tickers, simulate multi-agent trading strategies, and monitor watchlists with a 24/7 AI broker avatar.",
       technologies: ["React", "TypeScript", "FastAPI", "Supabase", "Modal", "Perplexity", "OpenAI", "HeyGen"],
