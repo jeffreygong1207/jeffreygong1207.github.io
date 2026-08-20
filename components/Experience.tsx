@@ -3,7 +3,7 @@ export default function Experience() {
     {
       organization: "Stripe",
       position: "Software Engineering Intern",
-      date: "2026",
+      date: "Summer 2026",
     },
     {
       organization: "Snowflake",
