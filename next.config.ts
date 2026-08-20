@@ -10,9 +10,10 @@ const isDev = process.env.NODE_ENV !== 'production'
 // from middleware, which would force every route to render dynamically.
 const csp = [
   "default-src 'self'",
-  // Vercel Web Analytics is same-origin in production -- the script and the
-  // beacons both live under /_vercel/insights -- so only `next dev`, which
-  // pulls the debug build from va.vercel-scripts.com, needs the exception.
+  // Vercel Web Analytics is same-origin in production -- Vercel serves the
+  // script and beacons from a randomized path on our own domain to dodge ad
+  // blockers -- so only `next dev`, which pulls the debug build from
+  // va.vercel-scripts.com, needs the exception.
   `script-src 'self' 'unsafe-inline'${isDev ? ' https://va.vercel-scripts.com' : ''}`,
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https://*.supabase.co",
