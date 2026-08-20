@@ -12,7 +12,8 @@ interface Project {
   title: string;
   description: string;
   technologies: string[];
-  image: string;
+  // Optional: a project can be listed before its screenshot exists.
+  image?: string;
   links: ProjectLinks;
 }
 
@@ -23,7 +24,6 @@ export default function Projects() {
       description:
         "Chrome new-tab notepad that remembers. Promote a passage with ⌘⏎ and it is chunked, embedded, and enriched into a permanent store you can search by meaning months later, with citations back to the day you wrote it. Retrieval fuses vector similarity with full-text ranking, so exact terms and project codenames survive a search that cosine distance alone would lose.",
       technologies: ["React", "TypeScript", "Vite", "Chrome MV3", "Supabase", "Deno", "pgvector", "Groq"],
-      image: "/images/smart-docustore.png",
       links: {},
     },
     {
@@ -31,7 +31,6 @@ export default function Projects() {
       description:
         "Ledger, work queue, and escalation pager for Cal Hacks Foundation finance operations, replacing a set of spreadsheets that were losing money in measurable ways. Money is integer cents end to end, the ledger is append-only with corrections written as reversing entries, and balances are derived views rather than cached columns. Invariants are enforced by Postgres constraints, triggers, and row-level security rather than by application code.",
       technologies: ["TypeScript", "Postgres", "Supabase", "Vitest"],
-      image: "/images/calhacks-finance.png",
       links: {},
     },
     {
@@ -125,21 +124,29 @@ export default function Projects() {
           {projects.map((project, index) => (
             <div key={index} className="flex flex-col md:flex-row gap-4">
               <div className="flex-shrink-0 w-full md:w-32 h-24 relative bg-gray-100 dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700 overflow-hidden flex items-center justify-center">
-                <Image
-                  src={project.image}
-                  alt={project.title}
-                  fill
-                  // The frame is full-width until md, then a fixed 128px. Without
-                  // this, the browser assumes 100vw and downloads a full-width
-                  // image to render it at thumbnail size.
-                  sizes="(min-width: 768px) 128px, 100vw"
-                  className="object-cover"
-                  onError={(e) => {
-                    // Fallback to placeholder if image doesn't exist
-                    e.currentTarget.style.display = "none";
-                  }}
-                />
-                <span className="text-gray-400 text-xs hidden">Image placeholder</span>
+                {project.image ? (
+                  <Image
+                    src={project.image}
+                    alt={project.title}
+                    fill
+                    // The frame is full-width until md, then a fixed 128px. Without
+                    // this, the browser assumes 100vw and downloads a full-width
+                    // image to render it at thumbnail size.
+                    sizes="(min-width: 768px) 128px, 100vw"
+                    className="object-cover"
+                  />
+                ) : (
+                  // The frame is kept so rows stay aligned whether or not a
+                  // screenshot exists yet.
+                  <span className="text-sm font-semibold tracking-wide text-gray-400">
+                    {project.title
+                      .split(" ")
+                      .map((word) => word[0])
+                      .join("")
+                      .slice(0, 3)
+                      .toUpperCase()}
+                  </span>
+                )}
               </div>
               <div className="flex-1">
                 <h3 className="text-base font-semibold mb-1 text-gray-900">{project.title}</h3>
