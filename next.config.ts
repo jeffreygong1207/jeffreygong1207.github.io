@@ -1,6 +1,7 @@
 import type { NextConfig } from 'next'
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''
+const isDev = process.env.NODE_ENV !== 'production'
 
 // Rendered post content comes from ProseMirror JSON through React, which
 // escapes it, so CSP here is defence in depth rather than the primary control.
@@ -9,7 +10,10 @@ const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''
 // from middleware, which would force every route to render dynamically.
 const csp = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-inline'",
+  // Vercel Web Analytics is same-origin in production -- the script and the
+  // beacons both live under /_vercel/insights -- so only `next dev`, which
+  // pulls the debug build from va.vercel-scripts.com, needs the exception.
+  `script-src 'self' 'unsafe-inline'${isDev ? ' https://va.vercel-scripts.com' : ''}`,
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https://*.supabase.co",
   "font-src 'self' data:",
