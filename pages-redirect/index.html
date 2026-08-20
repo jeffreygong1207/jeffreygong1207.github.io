@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Jeffrey Gong — moved</title>
+
+    <!--
+      This directory is all that GitHub Pages still serves. The site itself now
+      lives on Vercel; everything here exists only to forward old links.
+
+      To change where it forwards, edit TARGET below and in 404.html.
+    -->
+
+    <link rel="canonical" href="https://jeffreygong.dev/" />
+    <meta http-equiv="refresh" content="0; url=https://jeffreygong.dev/" />
+    <meta name="robots" content="noindex" />
+
+    <style>
+      body {
+        font-family: ui-sans-serif, system-ui, sans-serif;
+        display: grid;
+        place-items: center;
+        min-height: 100vh;
+        margin: 0;
+        color: #111827;
+      }
+      p {
+        text-align: center;
+        line-height: 1.6;
+      }
+    </style>
+  </head>
+  <body>
+    <p>
+      This site has moved.<br />
+      <a href="https://jeffreygong.dev/">jeffreygong.dev</a>
+    </p>
+
+    <script>
+      // Forward the visitor's actual path, so a link to /projects lands on
+      // /projects rather than the homepage. The meta refresh above is the
+      // no-JS fallback and only reaches the root.
+      var TARGET = "https://jeffreygong.dev";
+      location.replace(
+        TARGET + location.pathname + location.search + location.hash
+      );
+    </script>
+  </body>
+</html>

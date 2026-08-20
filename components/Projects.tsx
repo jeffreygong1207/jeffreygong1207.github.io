@@ -19,6 +19,22 @@ interface Project {
 export default function Projects() {
   const projects: Project[] = [
     {
+      title: "Smart DocuStore",
+      description:
+        "Chrome new-tab notepad that remembers. Promote a passage with ⌘⏎ and it is chunked, embedded, and enriched into a permanent store you can search by meaning months later, with citations back to the day you wrote it. Retrieval fuses vector similarity with full-text ranking, so exact terms and project codenames survive a search that cosine distance alone would lose.",
+      technologies: ["React", "TypeScript", "Vite", "Chrome MV3", "Supabase", "Deno", "pgvector", "Groq"],
+      image: "/images/smart-docustore.png",
+      links: {},
+    },
+    {
+      title: "Cal Hacks Finance",
+      description:
+        "Ledger, work queue, and escalation pager for Cal Hacks Foundation finance operations, replacing a set of spreadsheets that were losing money in measurable ways. Money is integer cents end to end, the ledger is append-only with corrections written as reversing entries, and balances are derived views rather than cached columns. Invariants are enforced by Postgres constraints, triggers, and row-level security rather than by application code.",
+      technologies: ["TypeScript", "Postgres", "Supabase", "Vitest"],
+      image: "/images/calhacks-finance.png",
+      links: {},
+    },
+    {
       title: "Restauranty",
       description: "Full-stack reservation platform built at LA Hacks 2026 to help restaurants minimize no-shows and recover empty tables. Features no-show risk scoring, verified waitlists, and role-based dashboards for restaurants and diners.",
       technologies: ["Next.js", "TypeScript", "MongoDB", "Auth0", "Claude AI", "Twilio", "Tailwind CSS", "Vercel"],
@@ -113,6 +129,10 @@ export default function Projects() {
                   src={project.image}
                   alt={project.title}
                   fill
+                  // The frame is full-width until md, then a fixed 128px. Without
+                  // this, the browser assumes 100vw and downloads a full-width
+                  // image to render it at thumbnail size.
+                  sizes="(min-width: 768px) 128px, 100vw"
                   className="object-cover"
                   onError={(e) => {
                     // Fallback to placeholder if image doesn't exist

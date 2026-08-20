@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Jeffrey Gong — moved</title>
+
+    <!--
+      GitHub Pages serves this for any path it doesn't recognize, which after
+      the move is every path. Forwarding happens here, preserving the path.
+
+      To change where it forwards, edit TARGET below and in index.html.
+    -->
+
+    <meta name="robots" content="noindex" />
+
+    <style>
+      body {
+        font-family: ui-sans-serif, system-ui, sans-serif;
+        display: grid;
+        place-items: center;
+        min-height: 100vh;
+        margin: 0;
+        color: #111827;
+      }
+      p {
+        text-align: center;
+        line-height: 1.6;
+      }
+    </style>
+  </head>
+  <body>
+    <p>
+      This site has moved.<br />
+      <a href="https://jeffreygong.dev/">jeffreygong.dev</a>
+    </p>
+
+    <script>
+      var TARGET = "https://jeffreygong.dev";
+      location.replace(
+        TARGET + location.pathname + location.search + location.hash
+      );
+    </script>
+  </body>
+</html>

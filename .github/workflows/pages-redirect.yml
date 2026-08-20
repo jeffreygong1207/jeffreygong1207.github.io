@@ -1,0 +1,44 @@
+# The site is built and served by Vercel. GitHub Pages now serves only the
+# static shell in pages-redirect/, which forwards old jeffreygong1207.github.io
+# links to their equivalent path on the new host.
+#
+# Pages must be set to deploy from GitHub Actions:
+#   Settings -> Pages -> Build and deployment -> Source: GitHub Actions
+
+name: Deploy redirect shell to Pages
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "pages-redirect/**"
+      - ".github/workflows/pages-redirect.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./pages-redirect
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
