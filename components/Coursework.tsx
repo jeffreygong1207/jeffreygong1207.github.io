@@ -67,6 +67,16 @@ export default function Coursework() {
         "UGBA 103 - Introduction to Finance",
       ],
     },
+    {
+      semester: "Fall 2026",
+      courses: [
+        "COMPSCI 182 - Designing, Visualizing and Understanding Deep Neural Networks",
+        "UGBA 102B - Managerial Accounting",
+        "UGBA 104 - Introduction to Business Analytics",
+        "UGBA 106 - Marketing",
+        "UGBA 133 - Investments",
+      ],
+    },
   ];
 
   return (
