@@ -22,15 +22,8 @@ export default function Projects() {
     {
       title: "Smart DocuStore",
       description:
-        "Chrome new-tab notepad that remembers. Promote a passage with ⌘⏎ and it is chunked, embedded, and enriched into a permanent store you can search by meaning months later, with citations back to the day you wrote it. Retrieval fuses vector similarity with full-text ranking, so exact terms and project codenames survive a search that cosine distance alone would lose.",
+        "Chrome new-tab notepad that remembers. Promote a passage with ⌘⏎ and it is chunked, embedded, and searchable by meaning months later, with citations back to the day you wrote it.",
       technologies: ["React", "TypeScript", "Vite", "Chrome MV3", "Supabase", "Deno", "pgvector", "Groq"],
-      links: {},
-    },
-    {
-      title: "Cal Hacks Finance",
-      description:
-        "Ledger, work queue, and escalation pager for Cal Hacks Foundation finance operations, replacing a set of spreadsheets that were losing money in measurable ways. Money is integer cents end to end, the ledger is append-only with corrections written as reversing entries, and balances are derived views rather than cached columns. Invariants are enforced by Postgres constraints, triggers, and row-level security rather than by application code.",
-      technologies: ["TypeScript", "Postgres", "Supabase", "Vitest"],
       links: {},
     },
     {
