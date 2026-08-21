@@ -39,3 +39,6 @@ next-env.d.ts
 public/images/*.pdf
 
 .env*
+
+# local handoff notes, never published (this repo is public)
+HANDOFF.md
