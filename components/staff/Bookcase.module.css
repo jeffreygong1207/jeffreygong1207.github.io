@@ -1,0 +1,464 @@
+/* ===========================================================================
+   The bookcase — /admin/coursework. Spec §2.2, ported from design/shelf.mjs.
+
+   Every numeric constant here came out of that generator or out of §2.2 and is
+   load-bearing. Per-book values arrive as custom properties set inline on the
+   spine (widths, cap heights, dye-lot drift); the rules themselves are static.
+
+   preserve-3d hazard list, from §3 — `filter`, `opacity < 1`, `overflow` other
+   than visible, `clip-path` and `mask` silently force `transform-style` back to
+   `flat` on the element that carries them. The 3D chain here is
+
+       .stage (perspective) > .case > .shelves > .shelf > .row > spine
+
+   and NONE of those five carry any of the five. The dye-lot `filter` lives on
+   .cloth, which is a leaf; `.headband`'s `opacity` likewise. Do not hoist
+   either one. This has already rendered a whole shelf flat once in this
+   project.
+   =========================================================================== */
+
+/* ---------------------------------------------------------------------------
+   Page furniture
+   --------------------------------------------------------------------------- */
+
+.header {
+  padding-inline: clamp(1.5rem, 5vw, 4rem);
+  padding-bottom: 2rem;
+  max-width: 60rem;
+}
+
+.title {
+  font-family: var(--salon-font-display);
+  font-size: 1.75rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--salon-ink);
+  margin: 0;
+}
+
+/* --salon-ink, not --salon-muted: this is body copy and muted is 4.4:1, which
+   §3 reserves for secondary text. The legend below IS secondary. */
+.standfirst {
+  font-family: var(--salon-font-read);
+  font-size: 1.0625rem;
+  line-height: 1.6;
+  color: var(--salon-ink);
+  margin: 0.75rem 0 0;
+  max-width: 46rem;
+}
+
+.legend {
+  font-family: var(--salon-font-ui);
+  font-size: 0.8125rem;
+  line-height: 1.65;
+  color: var(--salon-muted);
+  margin: 1.25rem 0 0;
+  max-width: 46rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.625rem;
+}
+
+/* A miniature of the real headband, so the legend shows the thing it names
+   rather than describing it. */
+.legendSwatch {
+  flex: none;
+  width: 30px;
+  height: 3px;
+  margin-top: 0.55em;
+  background: repeating-linear-gradient(90deg, #c8bba0 0 1.5px, #6e5f49 1.5px 3px);
+  opacity: 0.85;
+}
+
+.legendStrong {
+  color: var(--salon-gilt);
+  font-weight: 600;
+}
+
+/*
+  The scroll viewport. This sits ABOVE `.stage`, i.e. above the perspective
+  root, so its `overflow` cannot flatten anything on the 3D chain — the
+  flattening rule applies to the element that carries `transform-style`, and
+  neither this element nor any ancestor of it has one.
+
+  Centring is `margin-inline: auto` on a fixed-width block child rather than
+  flex centring: a centred flex item wider than its scroll container puts its
+  left overflow out of reach of the scrollbar, auto margins collapse to 0 and
+  stay reachable.
+*/
+.viewport {
+  overflow-x: auto;
+  padding: 56px 48px 80px;
+  overscroll-behavior-x: contain;
+}
+
+/* ---------------------------------------------------------------------------
+   The case
+   --------------------------------------------------------------------------- */
+
+.stage {
+  perspective: 3200px;
+  perspective-origin: 50% 42%;
+  width: 566px;
+  margin-inline: auto;
+}
+
+.case {
+  position: relative;
+  width: 566px;
+  padding: 18px 18px 0;
+  background: #1a2620;
+  box-shadow:
+    inset 0 0 0 1px rgba(221, 238, 255, 0.07),
+    inset 0 26px 40px -22px rgba(0, 0, 0, 0.85);
+  transform: rotateX(4deg) rotateY(-21deg);
+  transform-style: preserve-3d;
+}
+
+/* Three case edges. Left is the lit side, right falls into the room, top is
+   the crown. Each is one gradient — a solid on any of them reads as a border. */
+.edgeLeft,
+.edgeRight {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 20px;
+}
+
+.edgeLeft {
+  left: 0;
+  background: linear-gradient(90deg, #66796b 0%, #3d4e43 40%, #2a3830 100%);
+}
+
+.edgeRight {
+  right: 0;
+  background: linear-gradient(90deg, #2a3830 0%, #1e2a24 60%, #131c18 100%);
+}
+
+.edgeTop {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 14px;
+  background: linear-gradient(#6b7e70, #33422f);
+}
+
+.shelves {
+  display: flex;
+  flex-direction: column;
+  gap: 26px;
+  padding-top: 8px;
+  /* Intermediate elements on the 3D chain keep preserve-3d so the chain is
+     never broken; shelf.mjs omits it here and gets away with it only because
+     nothing below is z-displaced. */
+  transform-style: preserve-3d;
+}
+
+.shelf {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  transform-style: preserve-3d;
+}
+
+.row {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  padding: 0 0 0 16px;
+  margin: 0;
+  list-style: none;
+  transform-style: preserve-3d;
+}
+
+.board {
+  width: 100%;
+  height: 11px;
+  border-radius: 1px;
+  background: linear-gradient(#5a6b5e, #26332a);
+  box-shadow:
+    inset 0 0 0 1px rgba(221, 238, 255, 0.1),
+    0 16px 26px -14px rgba(0, 0, 0, 0.9);
+}
+
+.caption {
+  font-family: var(--salon-font-mono);
+  font-size: 8.5px;
+  letter-spacing: 0.16em;
+  color: #7e9186;
+  padding: 6px 0 0 16px;
+  margin: 0;
+}
+
+/* ---------------------------------------------------------------------------
+   A spine
+   --------------------------------------------------------------------------- */
+
+.spine {
+  position: relative;
+  width: var(--w);
+  height: var(--h);
+  flex-shrink: 0;
+  transform-origin: bottom center;
+  /* Rule 14. --lean is 0deg on the 35 upright volumes; --lift is the pointer /
+     keyboard response on the 13 that link out. Composed here so the two never
+     fight over the transform property. */
+  transform: rotate(var(--lean, 0deg)) translateY(var(--lift, 0px));
+  transition: transform 0.32s cubic-bezier(0.2, 0.7, 0.3, 1);
+}
+
+/*
+  The cloth. Three background layers over the dye colour:
+    1 + 2  weave at a 0.5px period, decorrelated per book by --phase (rule 10).
+           Real bookcloth repeats at ~0.9mm, i.e. sub-pixel; it must read as
+           sheen breakup, not as stripes.
+    3      the cylinder profile (rule 7): a bright Fresnel rim at 0%, the dip at
+           3–7%, the specular peak of .223 at 38%, DARKEST at 86% — not 100% —
+           then lifting back to .123 at the far edge. A gradient that bottoms
+           out at the edge reads flat.
+
+  `filter` for the dye lot stays HERE and only here. This element is a leaf.
+*/
+.cloth {
+  position: absolute;
+  inset: 0;
+  border-radius: 1.5px;
+  background-image:
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.02) 0 0.5px, rgba(0, 0, 0, 0.02) 0.5px 1px),
+    repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.03) 0 0.5px, rgba(255, 255, 255, 0.012) 0.5px 1px),
+    linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.066) 0%,
+      rgba(255, 255, 255, 0.059) 3%,
+      rgba(255, 255, 255, 0.061) 7%,
+      rgba(255, 255, 255, 0.069) 11%,
+      rgba(255, 255, 255, 0.082) 16%,
+      rgba(255, 255, 255, 0.101) 22%,
+      rgba(255, 255, 255, 0.153) 29%,
+      rgba(255, 255, 255, 0.223) 38%,
+      rgba(255, 255, 255, 0.105) 48%,
+      rgba(0, 0, 0, 0.011) 58%,
+      rgba(0, 0, 0, 0.08) 68%,
+      rgba(0, 0, 0, 0.154) 78%,
+      rgba(0, 0, 0, 0.173) 86%,
+      rgba(0, 0, 0, 0.164) 92%,
+      rgba(0, 0, 0, 0.15) 96%,
+      rgba(0, 0, 0, 0.123) 100%
+    );
+  background-color: var(--cloth);
+  background-position: var(--phase) var(--phase), 0 0, 0 0;
+  /* Rule 11: dye-lot drift, hue ±5° and brightness ±8%. */
+  filter: hue-rotate(var(--drift)) brightness(var(--val));
+  /* Rule 8: asymmetric micro-bevel. Four equal insets read as a border, so the
+     head is bright, the tail dark, and the two sides weaker than either. */
+  box-shadow:
+    inset 0 calc(-1 * var(--ao-y)) var(--ao-blur) calc(-1 * var(--ao-spread)) rgba(0, 0, 0, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.34),
+    inset 1px 0 0 rgba(255, 255, 255, 0.16),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.42),
+    inset -1px 0 0 rgba(0, 0, 0, 0.26),
+    inset 0 0 6px rgba(0, 0, 0, 0.14);
+}
+
+/* Rule 6: hinge grooves, ~8.5% in from each edge, ~4.5% of W wide, full height.
+   The most resolvable book detail at shelf distance and the one CG always
+   omits. The gradients run in OPPOSITE directions — a channel is lit on the
+   side facing the light and shadowed on the side facing away. */
+.hingeLeft,
+.hingeRight {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: var(--hinge-w);
+}
+
+.hingeLeft {
+  left: var(--hinge-in);
+  background: linear-gradient(90deg, rgba(0, 0, 0, 0.62), rgba(0, 0, 0, 0.2) 60%, rgba(255, 255, 255, 0.07));
+}
+
+.hingeRight {
+  right: var(--hinge-in);
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.05), rgba(0, 0, 0, 0.24) 40%, rgba(0, 0, 0, 0.66));
+}
+
+/* Rule 9, part one of three: the ambient-occlusion wedge in the seam, falling
+   off roughly 1/d² over 11px. */
+.seamShade {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  width: 11px;
+  background: linear-gradient(
+    90deg,
+    rgba(0, 0, 0, 0) 0%,
+    rgba(0, 0, 0, 0.06) 55%,
+    rgba(0, 0, 0, 0.22) 82%,
+    rgba(0, 0, 0, 0.55) 96%,
+    rgba(0, 0, 0, 0.78) 100%
+  );
+}
+
+/* Parts two and three: the near-black contact line at the far edge and the
+   1px bright sliver on the lit edge of the next book. It is the bright/dark
+   PAIR that reads as two separate solids; either alone reads as a printed
+   rule. The near-black line is the `inset -1px 0 0 rgba(0,0,0,.26)` on .cloth. */
+.seamSliver {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 1px;
+  background: rgba(255, 255, 255, 0.16);
+}
+
+/* Rule 15: the headband at the head of the spine. Real books have it, renders
+   do not. `opacity` is safe here — leaf element, nothing 3D below it. */
+.headband {
+  position: absolute;
+  top: 0;
+  left: var(--headband-in);
+  width: var(--headband-w);
+  height: 3px;
+  background: repeating-linear-gradient(90deg, #c8bba0 0 1.5px, #6e5f49 1.5px 3px);
+  opacity: 0.85;
+}
+
+/* ---------------------------------------------------------------------------
+   Foil (rules 1–5, 12)
+   --------------------------------------------------------------------------- */
+
+/*
+  The foil stack. `overflow: hidden` is a guard, not a mechanism: the auto-fit
+  in Bookcase.tsx already sizes the title and the code to fit, and this only
+  catches a future data change that outgrows it — foil lying across the shelf
+  board is a worse failure than a clipped word, and the full text is in .srOnly
+  either way. Safe for the 3D chain: .type is not preserve-3d and has no
+  preserve-3d descendant. Do NOT move it up to .spine or .row.
+*/
+.type {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: var(--pad-top);
+  padding-bottom: var(--pad-bottom);
+  overflow: hidden;
+}
+
+/* Rules are --rule-w wide, i.e. 72% of W, so the foil never reaches into a
+   hinge groove. */
+.ruleTop,
+.ruleBottom {
+  width: var(--rule-w);
+  background: var(--foil-grad);
+}
+
+.ruleTop {
+  height: var(--rule-h-top);
+  opacity: 0.95;
+}
+
+.ruleBottom {
+  height: var(--rule-h-bottom);
+  opacity: 0.8;
+}
+
+/*
+  Rule 1: the TITLE is the hero, in foil. Rule 3: top-to-bottom, which is the
+  US/UK/Scandinavian convention — `vertical-rl` with no 180° rotate. Rule 5:
+  ranged from the HEAD, with .spacer taking up the slack, not centred along the
+  spine; centring makes short-titled books float mid-spine and real books do
+  not do that.
+
+  Rule 12: the foil is a GRADIENT THAT GOES NEAR-BLACK. Gold foil is
+  vacuum-deposited aluminium under tinted lacquer, so it must go dark facing
+  the dark side of the room. A flat yellow fill reads as plastic.
+*/
+.titleFoil {
+  margin-top: var(--title-mt);
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  font-family: var(--salon-font-display);
+  font-size: var(--fs);
+  font-weight: 600;
+  letter-spacing: var(--track);
+  white-space: nowrap;
+  color: transparent;
+  background: var(--foil-grad);
+  -webkit-background-clip: text;
+  background-clip: text;
+  text-shadow:
+    0 1px 0 rgba(0, 0, 0, 0.55),
+    0 -1px 0 rgba(255, 255, 255, 0.14);
+}
+
+.spacer {
+  flex-grow: 1;
+}
+
+/* Rule 1 again, the other half: the course code is the SMALLEST element on the
+   spine and it sits at the FOOT. Inverting this is the single biggest reason a
+   CG spine reads cheap. It is decorative at this size and is duplicated as
+   real text in .srOnly (§3). */
+.codeFoil {
+  margin-top: var(--code-mt);
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  font-family: var(--salon-font-mono);
+  font-size: var(--code-fs);
+  letter-spacing: 0.18em;
+  white-space: nowrap;
+  color: var(--foil);
+  opacity: 0.86;
+}
+
+/* ---------------------------------------------------------------------------
+   The 13 that link out
+   --------------------------------------------------------------------------- */
+
+/*
+  A real focusable DOM element covering the whole spine (§3). It carries the
+  accessible name and nothing visible, so the foil underneath is untouched.
+  The other 26 spines have no interactive element at all — no tabindex, no
+  hover affordance — because they have nothing to open.
+*/
+.guideLink {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: block;
+  border-radius: 1.5px;
+}
+
+.spine:has(.guideLink:hover),
+.spine:has(.guideLink:focus-visible) {
+  --lift: -5px;
+}
+
+.guideLink:focus-visible {
+  outline: 2px solid var(--salon-accent);
+  outline-offset: 3px;
+}
+
+/* §3: the decorative spine title and code must also exist as accessible text,
+   and so must the full course title, which is far too long to set on a spine. */
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  border: 0;
+  /* `overflow: hidden` is not decoration here. Without it the nowrap text
+     overflows its 1px box and counts toward the spine's scrollable overflow —
+     measured, that pushed the bookcase's scroll width from 662px to 1262px and
+     gave the page a phantom horizontal scroll on mobile. */
+  overflow: hidden;
+  white-space: nowrap;
+  clip-path: inset(50%);
+}

@@ -1,7 +1,10 @@
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 
-export const metadata = { robots: { index: false, follow: false } }
+// Restyle only: the storage logic below is unchanged. `robots` is not exported
+// here any more — app/(staff)/admin/layout.tsx already sets it for the whole
+// staff area, and two exports of the same field is one place too many to keep
+// in sync.
 
 interface Asset {
   name: string
@@ -61,8 +64,13 @@ export default async function MediaPage() {
   return (
     <>
       <div className="mb-8">
-        <h1 className="text-2xl font-bold tracking-tight text-gray-900">Media</h1>
-        <p className="mt-1 text-sm text-gray-500">
+        <h1
+          className="text-[30px] font-normal leading-tight tracking-[-0.018em] text-salon-ink"
+          style={{ fontFamily: 'var(--salon-font-read)' }}
+        >
+          Media
+        </h1>
+        <p className="mt-1 text-sm text-salon-muted">
           {assets.length === 0
             ? 'Images uploaded from the editor appear here.'
             : `${assets.length} image${assets.length === 1 ? '' : 's'} · ${formatBytes(totalBytes)}`}
@@ -70,18 +78,25 @@ export default async function MediaPage() {
       </div>
 
       {assets.length === 0 ? (
-        <p className="rounded-lg border border-dashed border-gray-300 bg-white px-6 py-16 text-center text-sm text-gray-500">
+        // §1.2/1.3: a plate, not a dashed card. Nothing here is a drop target,
+        // so it should not draw itself as one.
+        <p className="salon-plate px-6 py-16 text-center text-sm text-salon-muted">
           Nothing uploaded yet. Drag an image into a post and it lands here.
         </p>
       ) : (
         <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
           {assets.map((asset) => (
-            <li
-              key={asset.path}
-              className="overflow-hidden rounded-lg border border-gray-200 bg-white"
-            >
-              <a href={asset.url} target="_blank" rel="noopener noreferrer">
-                <div className="aspect-[4/3] bg-gray-100">
+            // §1.2: the thumbnail sits on a plate — no border, no radius, no
+            // drop shadow. `.salon-plate` carries the §1.3 inset hairline,
+            // which is what an edge looks like on a dark ground.
+            <li key={asset.path} className="salon-plate">
+              <a
+                href={asset.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-salon-accent"
+              >
+                <div className="aspect-[4/3] bg-salon-sunken">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={asset.url}
@@ -95,18 +110,23 @@ export default async function MediaPage() {
                 {asset.postTitle ? (
                   <Link
                     href={`/admin/posts/${asset.postId}`}
-                    className="block truncate text-xs font-medium text-gray-900 hover:underline"
+                    className="block truncate text-xs font-medium text-salon-ink transition-colors hover:text-salon-accent"
                   >
                     {asset.postTitle}
                   </Link>
                 ) : (
                   // The post was deleted but its objects were not: storage has
                   // no foreign key to posts, so nothing cascades.
-                  <span className="block truncate text-xs font-medium text-gray-400">
+                  <span className="block truncate text-xs font-medium text-salon-muted">
                     Orphaned
                   </span>
                 )}
-                <p className="mt-0.5 text-xs text-gray-400">{formatBytes(asset.size)}</p>
+                <p
+                  className="mt-0.5 text-[11px] text-salon-muted"
+                  style={{ fontFamily: 'var(--salon-font-mono)' }}
+                >
+                  {formatBytes(asset.size)}
+                </p>
               </div>
             </li>
           ))}

@@ -3,6 +3,7 @@
 import { useRef } from 'react'
 import { useEditorState, type Editor } from '@tiptap/react'
 import { safeHref } from '@/lib/prosemirror'
+import styles from '@/components/staff/Sheet.module.css'
 
 export default function EditorToolbar({
   editor,
@@ -56,7 +57,12 @@ export default function EditorToolbar({
   }
 
   return (
-    <div className="sticky top-0 z-10 mb-6 flex flex-wrap items-center gap-1 border-y border-gray-200 bg-white/95 py-2 backdrop-blur">
+    // Chrome on the sheet, so it takes the UI face rather than the reading one.
+    // Flat DOM: nothing on a writing surface is 3D.
+    // `group`, not `toolbar`: role="toolbar" carries an APG expectation of
+    // roving tabindex and arrow-key traversal, and every button here is
+    // individually tabbable by design.
+    <div className={styles.toolbar} role="group" aria-label="Formatting">
       <Btn on={state.bold} onClick={() => editor.chain().focus().toggleBold().run()} label="Bold">
         <span className="font-bold">B</span>
       </Btn>
@@ -67,7 +73,7 @@ export default function EditorToolbar({
         <span className="line-through">S</span>
       </Btn>
       <Btn on={state.code} onClick={() => editor.chain().focus().toggleCode().run()} label="Inline code">
-        <span className="font-mono text-xs">{'</>'}</span>
+        <span className="text-xs" style={MONO}>{'</>'}</span>
       </Btn>
 
       <Divider />
@@ -91,7 +97,7 @@ export default function EditorToolbar({
         1.
       </Btn>
       <Btn on={state.codeBlock} onClick={() => editor.chain().focus().toggleCodeBlock().run()} label="Code block">
-        <span className="font-mono text-xs">{'{ }'}</span>
+        <span className="text-xs" style={MONO}>{'{ }'}</span>
       </Btn>
 
       <Divider />
@@ -106,10 +112,19 @@ export default function EditorToolbar({
         &mdash;
       </Btn>
 
-      <input ref={fileInput} type="file" accept="image/*" onChange={pickImage} className="hidden" />
+      <input
+        ref={fileInput}
+        type="file"
+        accept="image/*"
+        onChange={pickImage}
+        className="hidden"
+        aria-label="Choose an image to insert"
+      />
     </div>
   )
 }
+
+const MONO = { fontFamily: 'var(--salon-font-mono)' }
 
 function Btn({
   on,
@@ -129,9 +144,7 @@ function Btn({
       title={label}
       aria-label={label}
       aria-pressed={on}
-      className={`flex h-8 min-w-8 items-center justify-center rounded px-2 text-sm transition ${
-        on ? 'bg-gray-900 text-white' : 'text-gray-600 hover:bg-gray-100'
-      }`}
+      className={`${styles.tbBtn}${on ? ` ${styles.tbBtnOn}` : ''}`}
     >
       {children}
     </button>
@@ -139,5 +152,5 @@ function Btn({
 }
 
 function Divider() {
-  return <span className="mx-1 h-5 w-px bg-gray-200" />
+  return <span aria-hidden="true" className={styles.tbDivider} />
 }

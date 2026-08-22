@@ -1,0 +1,346 @@
+/* ---------------------------------------------------------------------------
+   THE SHEET — the reading and writing surface (spec 2.5).
+
+   The hard cut out of 3D. Nothing in this file transforms, perspectives or
+   blends anything: reading and writing never happen inside a 3D surface, so the
+   editor stays ordinary DOM with real focus order, real selection and real
+   Cmd-F.
+
+   The tokens, the 592px measure and the 500ms ground cross-fade all come from
+   `.salon-sheet` in app/globals.css, which is frozen. This module adds two
+   things that file cannot carry:
+
+     1. Component chrome for the editor (toolbar, rail, fields).
+     2. Overrides for the shared `.prose-editor` rules, which are hardcoded to
+        Tailwind's grey ramp (#d1d5db #4b5563 #111827 #f3f4f6 #e5e7eb) plus
+        blue-600 (#2563eb). They are re-dressed here rather than edited in
+        place: globals.css ships to every public page. Each override is scoped
+        `.sheet :global(.prose-editor) …`, which is two classes against the
+        original's one, so it wins on specificity with both rules unlayered.
+   --------------------------------------------------------------------------- */
+
+/* Wraps the whole editor, sheet column and rail alike, so both sides of the
+   grid share one set of paper values. Contrast is against #EFEAE7:
+   ink-2 = 5.6:1, ink-3 = 4.7:1, rule-strong = 3.9:1 as a control boundary. */
+.surface {
+  --sheet-rule: rgba(44, 41, 38, 0.18);
+  --sheet-rule-mid: rgba(44, 41, 38, 0.28);
+  --sheet-rule-strong: rgba(44, 41, 38, 0.6);
+  --sheet-ink-2: rgba(44, 41, 38, 0.74);
+  --sheet-ink-3: rgba(44, 41, 38, 0.68);
+  --sheet-wash: rgba(44, 41, 38, 0.07);
+
+  color: var(--salon-sheet-ink);
+  font-family: var(--salon-font-ui);
+}
+
+/* The measure, the reading face and the light ground come from `.salon-sheet`,
+   which is on this same element. `:has()` in globals.css then takes the whole
+   room light — a light card floating on the dark ground is a glare bomb at
+   night, so the sheet takes over the ground instead. */
+.sheet {
+  min-width: 0;
+}
+
+.title,
+.subtitle {
+  width: 100%;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: var(--salon-sheet-ink);
+  font-family: var(--salon-font-read);
+}
+
+.title {
+  margin-bottom: 0.5rem;
+  font-size: 2rem;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.005em;
+}
+
+.subtitle {
+  margin-bottom: 2rem;
+  font-size: 1.125rem;
+  font-style: italic;
+  line-height: 1.5;
+  color: var(--sheet-ink-2);
+}
+
+.title::placeholder,
+.subtitle::placeholder {
+  color: var(--sheet-ink-3);
+}
+
+/* A text caret is a weak focus indicator on its own, and the rules these
+   replaced used a bare `focus:outline-none`. A struck underline in the sheet
+   accent is unambiguous and costs no layout. */
+.title:focus-visible,
+.subtitle:focus-visible {
+  outline: none;
+  box-shadow: 0 2px 0 0 var(--salon-accent-d);
+}
+
+.cover {
+  position: relative;
+  margin-bottom: 2rem;
+}
+
+.coverImage {
+  display: block;
+  width: 100%;
+}
+
+.coverRemove {
+  position: absolute;
+  right: 0.75rem;
+  top: 0.75rem;
+  padding: 0.25rem 0.75rem;
+  background: var(--salon-sheet-ink);
+  color: var(--salon-sheet);
+  font-family: var(--salon-font-ui);
+  font-size: 12px;
+}
+
+/* ---- toolbar ------------------------------------------------------------ */
+
+.toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px;
+  margin-bottom: 1.75rem;
+  padding: 0.375rem 0;
+  border-top: 1px solid var(--sheet-rule);
+  border-bottom: 1px solid var(--sheet-rule);
+  background: rgba(239, 234, 231, 0.94);
+  backdrop-filter: blur(6px);
+  font-family: var(--salon-font-ui);
+}
+
+.tbBtn {
+  display: flex;
+  height: 2rem;
+  min-width: 2rem;
+  align-items: center;
+  justify-content: center;
+  padding: 0 0.5rem;
+  border: 0;
+  background: transparent;
+  color: var(--sheet-ink-2);
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.tbBtn:hover {
+  background: var(--sheet-wash);
+  color: var(--salon-sheet-ink);
+}
+
+.tbBtn:focus-visible {
+  outline: 2px solid var(--salon-accent-d);
+  outline-offset: 1px;
+}
+
+.tbBtnOn,
+.tbBtnOn:hover {
+  background: var(--salon-sheet-ink);
+  color: var(--salon-sheet);
+}
+
+.tbDivider {
+  display: inline-block;
+  width: 1px;
+  height: 1.25rem;
+  margin: 0 0.375rem;
+  background: var(--sheet-rule-mid);
+}
+
+/* ---- rail --------------------------------------------------------------- */
+
+.rail {
+  font-family: var(--salon-font-ui);
+}
+
+.railLabel {
+  display: block;
+  margin-bottom: 0.4rem;
+  color: var(--sheet-ink-2);
+  font-family: var(--salon-font-mono);
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+.railHint {
+  margin-top: 0.375rem;
+  color: var(--sheet-ink-3);
+  font-size: 12px;
+}
+
+.control {
+  width: 100%;
+  padding: 0.5rem 0.625rem;
+  border: 1px solid var(--sheet-rule-strong);
+  background: transparent;
+  color: var(--salon-sheet-ink);
+  font-family: var(--salon-font-ui);
+  font-size: 13px;
+}
+
+.control:focus-visible {
+  outline: 2px solid var(--salon-accent-d);
+  outline-offset: 1px;
+}
+
+.btn {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--salon-sheet-ink);
+  font-family: var(--salon-font-ui);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.btn:focus-visible {
+  outline: 2px solid var(--salon-accent-d);
+  outline-offset: 2px;
+}
+
+.btn:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.btnPrimary {
+  background: var(--salon-sheet-ink);
+  color: var(--salon-sheet);
+}
+
+.btnPrimary:hover:not(:disabled) {
+  background: var(--salon-accent-d);
+}
+
+.btnGhost {
+  border-color: var(--sheet-rule-strong);
+}
+
+.btnGhost:hover:not(:disabled) {
+  background: var(--sheet-wash);
+}
+
+.btnDashed {
+  width: 100%;
+  border: 1px dashed var(--sheet-rule-strong);
+  color: var(--sheet-ink-2);
+  font-weight: 400;
+}
+
+.btnDashed:hover:not(:disabled) {
+  background: var(--sheet-wash);
+  color: var(--salon-sheet-ink);
+}
+
+.btnDanger {
+  padding-left: 0;
+  padding-right: 0;
+  color: var(--salon-accent-d);
+  font-weight: 400;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.btnDangerSolid {
+  background: #7a2f14;
+  color: var(--salon-sheet);
+}
+
+.message {
+  padding: 0.5rem 0.625rem;
+  background: var(--sheet-wash);
+  color: var(--salon-sheet-ink);
+  font-size: 13px;
+}
+
+.readTime {
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--sheet-rule);
+  color: var(--sheet-ink-3);
+  font-family: var(--salon-font-mono);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.confirmText {
+  color: var(--salon-sheet-ink);
+  font-size: 13px;
+}
+
+/* ---- prose-editor overrides --------------------------------------------- */
+/* Two classes against the frozen file's one. Scoped under `.sheet`, so nothing
+   here can reach the public blog, which never renders this module. */
+
+.sheet :global(.prose-editor) {
+  color: var(--salon-sheet-ink);
+}
+
+.sheet :global(.prose-editor) h2,
+.sheet :global(.prose-editor) h3,
+.sheet :global(.prose-editor) h4 {
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+.sheet :global(.prose-editor) blockquote {
+  border-left: 3px solid var(--sheet-rule-mid);
+  color: var(--sheet-ink-2);
+}
+
+.sheet :global(.prose-editor) pre {
+  border-radius: 0;
+  background: var(--salon-sunken);
+  color: var(--salon-sheet);
+  font-family: var(--salon-font-mono);
+  font-size: 0.8em;
+  line-height: 1.6;
+}
+
+.sheet :global(.prose-editor) code {
+  font-family: var(--salon-font-mono);
+}
+
+.sheet :global(.prose-editor) :not(pre) > code {
+  border-radius: 0;
+  background: var(--sheet-wash);
+  color: var(--salon-sheet-ink);
+}
+
+.sheet :global(.prose-editor) hr {
+  border-top: 1px solid var(--sheet-rule);
+}
+
+.sheet :global(.prose-editor) img {
+  border-radius: 0;
+}
+
+.sheet :global(.prose-editor) a {
+  /* 1.1: #DEA279 is 3.25:1 on the sheet and fails. The hue-locked sibling is
+     the only accent that may appear on paper. */
+  color: var(--salon-accent-d);
+  text-decoration-thickness: 1px;
+}
+
+.sheet :global(.prose-editor p.is-editor-empty:first-child)::before {
+  color: var(--sheet-ink-3);
+}
