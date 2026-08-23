@@ -12,7 +12,9 @@
  * `§2.3` and `lib/experience.ts` are exactly the right thing to write in a
  * comment and exactly the wrong thing to print on a page — so the file is
  * stripped of comments before anything is matched, and only JSX text nodes and
- * string/template literals are searched.
+ * string/template literals are searched. Stylesheets are searched too, but only
+ * inside `content:` declarations: that is the one place CSS puts words on a
+ * page, and it is the obvious way around a gate that reads nothing but code.
  *
  * Exits non-zero on the first offending file. Run: node scripts/check-staff-copy.mjs
  */
@@ -36,7 +38,7 @@ const ROOTS = [
   join(ROOT, 'components', 'staff'),
   join(ROOT, 'components', 'admin'),
 ]
-const EXTENSIONS = new Set(['.ts', '.tsx', '.js', '.jsx', '.mjs'])
+const EXTENSIONS = new Set(['.ts', '.tsx', '.js', '.jsx', '.mjs', '.css'])
 
 /**
  * Each rule is matched against one trimmed line of rendered text at a time, so
@@ -52,6 +54,25 @@ const RULES = [
   { name: 'EMPTY placeholder', re: /EMPTY/, why: 'one empty state per region, never a badge per row' },
   { name: 'data-shape aside', re: /on file/, why: 'describes the record, not the thing' },
   { name: 'data-shape aside', re: /already exist/, why: 'describes the record, not the thing' },
+  /**
+   * The rules above catch tells — a file path, a section mark, a `Why ` heading.
+   * The two below catch the genre itself, because the same note written in plain
+   * sentences has none of those tells: "Drawn as a generic slate, not a specific
+   * device..." carries no filename and no heading, and sailed straight through.
+   * Rationale is recognisable by its grammar. It reaches for a connective that
+   * weighs one option against another, or it makes the surface its own subject.
+   * Copy that states what a thing is needs neither.
+   */
+  {
+    name: 'rationale connective',
+    re: /\b(rather than|instead of|because|deliberately|on purpose|by design|not a specific)\b/i,
+    why: 'the page shows the decision; it does not argue for it',
+  },
+  {
+    name: 'self-reference',
+    re: /\bthis (surface|page|component|object|slate|card)\b/i,
+    why: 'a surface describes its content, never itself',
+  },
 ]
 
 function walk(dir) {
@@ -163,13 +184,58 @@ function renderedChunks(src) {
   return chunks
 }
 
+/** CSS has one comment form, and `//` inside a `url()` is not it. */
+function stripCssComments(src) {
+  return src.replace(/\/\*[\s\S]*?\*\//g, (m) => m.replace(/[^\n]/g, ' '))
+}
+
+/**
+ * Every quoted string in a `content:` declaration, and nothing else in the
+ * stylesheet. Selectors, custom-property names and font stacks are instructions
+ * to the browser; only generated content is read aloud. The lookbehind keeps
+ * `justify-content` and `align-content` out, and the value is walked rather than
+ * sliced at the first `;` so a sentence containing one is still read whole.
+ */
+function cssContentChunks(src) {
+  const chunks = []
+  const decl = /(?<![-\w])content\s*:/g
+  for (let m; (m = decl.exec(src)); ) {
+    const line = src.slice(0, m.index).split('\n').length
+    let i = m.index + m[0].length
+    while (i < src.length) {
+      const c = src[i]
+      if (c === ';' || c === '}') break
+      if (c === '"' || c === "'") {
+        let j = i + 1
+        let text = ''
+        while (j < src.length && src[j] !== c) {
+          if (src[j] === '\\') {
+            text += src[j] + (src[j + 1] ?? '')
+            j += 2
+            continue
+          }
+          text += src[j]
+          j += 1
+        }
+        if (text.trim()) chunks.push({ text, line })
+        i = j + 1
+        continue
+      }
+      i += 1
+    }
+  }
+  return chunks
+}
+
 const failures = []
 
 for (const dir of ROOTS) {
   for (const file of walk(dir)) {
     const src = readFileSync(file, 'utf8')
-    const scannable = stripModuleSpecifiers(stripComments(src))
-    for (const { text, line } of renderedChunks(scannable)) {
+    const chunks = file.endsWith('.css')
+      ? cssContentChunks(stripCssComments(src))
+      : renderedChunks(stripModuleSpecifiers(stripComments(src)))
+    for (const { text, line } of chunks) {
       for (const raw of text.split('\n')) {
         const trimmed = raw.trim()
         if (!trimmed) continue

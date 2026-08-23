@@ -238,6 +238,7 @@ async function fetchText(url, cookie) {
  */
 async function liveSheets(pageUrl, cookie) {
   const html = await fetchText(pageUrl, cookie)
+  const pageOrigin = new URL(pageUrl).origin
   const sources = []
 
   const inline = /<style[^>]*>([\s\S]*?)<\/style>/gi
@@ -251,8 +252,14 @@ async function liveSheets(pageUrl, cookie) {
     if (!/stylesheet/i.test(tag) && !/\.css/i.test(tag)) continue
     const href = /href\s*=\s*["']([^"']+)["']/i.exec(tag)
     if (!href) continue
-    const abs = new URL(href[1], pageUrl).toString()
-    sources.push({ name: abs, css: await fetchText(abs, cookie) })
+    const sheet = new URL(href[1], pageUrl)
+    const abs = sheet.toString()
+    // The cookie is a live /admin session. The page fetch above is the only
+    // request that has any claim on it; a <link> in the served markup can point
+    // anywhere (Vercel's toolbar injects a vercel.live stylesheet on preview
+    // deployments), and sending the session to a third-party host leaks it.
+    const credential = sheet.origin === pageOrigin ? cookie : undefined
+    sources.push({ name: abs, css: await fetchText(abs, credential) })
   }
 
   if (sources.length === 0) {
