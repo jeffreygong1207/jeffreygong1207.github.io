@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import SessionLink from '@/components/SessionLink';
 
 export default function Navigation() {
   const pathname = usePathname();
@@ -17,7 +18,7 @@ export default function Navigation() {
   return (
     <nav className="sticky top-0 bg-white border-b border-gray-200 z-50">
       <div className="max-w-4xl mx-auto px-6 md:px-8">
-        <div className="flex items-center justify-between py-4">
+        <div className="flex items-center justify-between gap-4 py-4">
           <div className="flex flex-wrap gap-4 md:gap-6">
             {navItems.map((item) => (
               <Link
@@ -33,6 +34,8 @@ export default function Navigation() {
               </Link>
             ))}
           </div>
+
+          <SessionLink />
         </div>
       </div>
     </nav>
