@@ -25,8 +25,8 @@
      token          hex       Y         L*      step to next
      --salon-sunken #0B120E   0.005355   4.84   ΔL* 5.26  (1.109:1)
      --salon-plate  #141E17   0.011391  10.10   ΔL* 9.03  (1.267:1)
-     --salon-ground #233226   0.027785  19.13   ΔL* 6.33  (1.230:1)
-     --salon-raised #314034   0.045677  25.47   ΔL* 8.97  (1.382:1)
+     --salon-ground #233226   0.027785  19.13   ΔL* 4.65  (1.161:1)
+     --salon-raised #2E3C31   0.040343  23.78   ΔL* 10.65 (1.463:1)
      --salon-line   #44554A   0.082204  34.44
 
    Before this amendment the plate was #1F2D23: 1.067:1 and ΔL* 2.18 against
@@ -48,7 +48,16 @@
   --salon-ground: #233226;
   --salon-sunken: #0B120E;
   --salon-plate: #141E17;
-  --salon-raised: #314034;
+  /* One step down from #314034. --salon-muted #93A69B measured 4.269:1 on the
+     old value — under the 4.5:1 floor — so every surface that lifts to `raised`
+     on hover or focus put its own secondary text below AA for exactly as long
+     as the pointer or the keyboard was on it: the row you are reading was the
+     one that failed. At #2E3C31 muted is 4.521:1 and ink 10.391:1, the lift
+     still reads at 1.472:1 above the plate, and ΔL* from the old value is 1.68
+     — inside a JND, so it is not a visible change of colour.
+     admin/posts already carried this exact hex as a local override and named
+     this token as "the durable fix"; that override is now gone. */
+  --salon-raised: #2E3C31;
   --salon-line: #44554A;
   --salon-ink: #EDF4EE;
   --salon-muted: #93A69B;
@@ -115,7 +124,7 @@
   --color-salon-ground: #233226;
   --color-salon-sunken: #0B120E;
   --color-salon-plate: #141E17;
-  --color-salon-raised: #314034;
+  --color-salon-raised: #2E3C31;
   --color-salon-line: #44554A;
   --color-salon-ink: #EDF4EE;
   --color-salon-muted: #93A69B;

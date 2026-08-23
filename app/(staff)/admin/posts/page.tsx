@@ -36,19 +36,14 @@ const PLATE = 'bg-salon-plate shadow-[inset_0_0_0_1px_rgba(221,238,255,0.14)]'
 // takes focus is the title link inside it — without this, a keyboard user lands
 // on a row that lights nothing.
 //
-// The lift surface is written out here rather than taken from `bg-salon-raised`.
-// --salon-muted #93A69B measures 4.269:1 on --salon-raised #314034, under the
-// 4.5:1 floor for text this size, so a row lifting to the token puts its own
-// 11px metadata line below AA for exactly as long as a pointer or the keyboard
-// is on it — i.e. the row you are reading is the one that fails. #2E3C31 is that
-// same step one point down: muted 4.52:1, ink 10.39:1, still 1.47:1 above the
-// plate so the lift keeps reading, and ΔL* 1.68 from the token, inside a JND, so
-// it is not a visible change of colour. The durable fix is --salon-raised itself
-// in app/globals.css and its mirror in the @theme block; that token is outside
-// this change, so /admin/media (TILE) and /admin (PLATE_INTERACTIVE) still lift
-// to it and still measure 4.27:1.
+// The lift surface is the token again. This row used to write out #2E3C31
+// locally because --salon-raised was #314034, where --salon-muted measures
+// 4.269:1 — under the 4.5:1 floor — so a lifted row put its own 11px metadata
+// line below AA. That override named --salon-raised itself as the durable fix,
+// and the token has since moved to exactly this value, so /admin/media and
+// /admin get the same fix rather than only this page.
 const ROW_STATE =
-  'group transition-[background-color,box-shadow] duration-[240ms] ease-[cubic-bezier(0.25,1,0.5,1)] hover:bg-[#2E3C31] hover:shadow-[inset_2px_0_0_0_rgba(221,238,255,0.30)] focus-within:bg-[#2E3C31] focus-within:shadow-[inset_2px_0_0_0_rgba(221,238,255,0.30)]'
+  'group transition-[background-color,box-shadow] duration-[240ms] ease-[cubic-bezier(0.25,1,0.5,1)] hover:bg-salon-raised hover:shadow-[inset_2px_0_0_0_rgba(221,238,255,0.30)] focus-within:bg-salon-raised focus-within:shadow-[inset_2px_0_0_0_rgba(221,238,255,0.30)]'
 
 // The muted lines answer the lift by going to --salon-ink as well — a second
 // channel, not the thing holding the row at AA. Both use the row's curve so the
@@ -74,7 +69,12 @@ export default async function PostsIndex({
   const active = FILTERS.find((f) => f.key === status) ?? FILTERS[0]
 
   const supabase = await createClient()
-  const { data } = await supabase
+  // `error` is captured, not discarded. Folding a failed query into `?? []`
+  // renders it as "Nothing written yet." — and with zero published posts today
+  // that is exactly the state a real empty blog produces, so an RLS denial or a
+  // dead connection would be indistinguishable from success on the one screen
+  // where the difference matters most.
+  const { data, error } = await supabase
     .from('posts')
     .select('id, title, subtitle, slug, status, published_at, updated_at, reading_minutes, tags')
     .order('updated_at', { ascending: false })
@@ -91,14 +91,19 @@ export default async function PostsIndex({
 
   return (
     <>
-      <div className="mb-8 flex items-center justify-between gap-4">
-        <h1 className="salon-h1">Posts</h1>
+      <header className="mb-8 flex flex-wrap items-end justify-between gap-x-8 gap-y-4">
+        <div>
+          <h1 className="salon-h1">Posts</h1>
+          <p className="salon-label mt-4">
+            {`${counts.published} published · ${counts.draft} draft${counts.draft === 1 ? '' : 's'}`}
+          </p>
+        </div>
         <form action={createPost}>
-          <button className="bg-salon-accent px-4 py-2 text-[13px] font-medium tracking-wide text-salon-sunken transition-colors hover:bg-salon-gilt salon-focus">
+          <button className="bg-salon-accent px-4 py-2 text-[13px] font-medium tracking-wide text-salon-sunken transition-colors duration-[var(--salon-dur-ui)] ease-[var(--salon-ease)] hover:bg-salon-gilt salon-focus">
             New post
           </button>
         </form>
-      </div>
+      </header>
 
       {/* Three counts and no plot: a stat tile is the right form here, not a chart. */}
       <div className="mb-8 grid grid-cols-3 gap-3">
@@ -115,7 +120,7 @@ export default async function PostsIndex({
               key={f.key}
               href={f.key === 'all' ? '/admin/posts' : `/admin/posts?status=${f.key}`}
               aria-current={isActive ? 'page' : undefined}
-              className={`-mb-px border-b-2 px-3 py-2 text-[13px] transition-colors salon-focus ${
+              className={`-mb-px border-b-2 px-3 py-2 text-[13px] transition-colors duration-[var(--salon-dur-ui)] ease-[var(--salon-ease)] salon-focus ${
                 isActive
                   ? 'border-salon-accent font-medium text-salon-ink'
                   : 'border-transparent text-salon-muted hover:text-salon-ink'
@@ -129,7 +134,11 @@ export default async function PostsIndex({
 
       {rows.length === 0 ? (
         <p className={`px-6 py-16 text-center text-sm text-salon-muted ${PLATE}`}>
-          {active.key === 'all' ? 'Nothing written yet.' : `No ${active.label.toLowerCase()}.`}
+          {error
+            ? 'Could not reach the cabinet. The posts are there; this screen is not.'
+            : active.key === 'all'
+              ? 'Nothing written yet.'
+              : `No ${active.label.toLowerCase()}.`}
         </p>
       ) : (
         <ul className={PLATE}>

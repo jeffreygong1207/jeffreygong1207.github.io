@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
+import Arrow from '@/components/staff/Arrow'
 import { SHELVES, TOTAL_VOLUMES } from '@/lib/coursework'
 import { EXPERIENCE_ROLES } from '@/lib/experience'
 import { PROJECTS } from '@/lib/projects'
@@ -35,7 +36,9 @@ export default async function Cabinet() {
   // One query, one round trip. Every number on this page is computed in JS over
   // the same result set the drafts come out of.
   const supabase = await createClient()
-  const { data } = await supabase
+  // Captured, not discarded: `?? []` alone renders a failed query as an empty
+  // cabinet, and every count on this page would read a confident zero.
+  const { data, error } = await supabase
     .from('posts')
     .select('id, title, subtitle, slug, status, published_at, updated_at, reading_minutes, tags')
     .order('updated_at', { ascending: false })
@@ -80,11 +83,14 @@ export default async function Cabinet() {
 
   return (
     <>
-      <header className="mb-10">
-        <h1 className="salon-h1">The Cabinet</h1>
-        <p className="mt-3 text-[11px] uppercase tracking-[0.2em] text-salon-muted" style={MONO}>
-          {plural(all.length, 'post')}
-        </p>
+      <header className="mb-8 flex flex-wrap items-end justify-between gap-x-8 gap-y-4">
+        <div>
+          <h1 className="salon-h1">The Cabinet</h1>
+          {/* `salon-label` rather than a hand-rolled near-miss of it: this was
+              11px at 0.2em where the token is 10px at 0.13em, which made the
+              same line read differently on each of five surfaces. */}
+          <p className="salon-label mt-4">{plural(all.length, 'post')}</p>
+        </div>
       </header>
 
       <section className="mb-12">
@@ -144,7 +150,7 @@ export default async function Cabinet() {
                   aria-hidden="true"
                   className="pt-0.5 text-salon-accent opacity-0 transition-opacity duration-[240ms] ease-[cubic-bezier(0.25,1,0.5,1)] group-hover:opacity-100 group-focus-visible:opacity-100"
                 >
-                  &rarr;
+                  <Arrow />
                 </span>
               </Link>
             </li>
@@ -162,14 +168,20 @@ export default async function Cabinet() {
 
         {drafts.length === 0 ? (
           <p className={`px-5 py-8 text-sm text-salon-muted ${PLATE}`}>
-            Nothing in progress.{' '}
-            <Link
-              href="/admin/posts"
-              className="salon-focus text-salon-accent underline underline-offset-4"
-            >
-              Start one
-            </Link>
-            .
+            {error ? (
+              'Could not reach the cabinet. Nothing here is a real count.'
+            ) : (
+              <>
+                Nothing in progress.{' '}
+                <Link
+                  href="/admin/posts"
+                  className="salon-focus text-salon-accent underline underline-offset-4"
+                >
+                  Start one
+                </Link>
+                .
+              </>
+            )}
           </p>
         ) : (
           <ul className={PLATE}>

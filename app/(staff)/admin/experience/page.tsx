@@ -37,7 +37,7 @@ export default function ExperiencePage() {
           </p>
         </div>
 
-        <div className="flex items-baseline gap-7">
+        <div className="flex items-baseline gap-8">
           <Stat value={String(EXPERIENCE_ROLES.length)} label="roles" />
           <Stat value={span()} label="span" />
         </div>
@@ -50,7 +50,7 @@ export default function ExperiencePage() {
 
 function Stat({ value, label }: { value: string; label: string }) {
   return (
-    <p className="flex flex-col items-end gap-0.5">
+    <p className="flex flex-col items-end gap-1">
       <span
         className="text-[19px] tabular-nums text-salon-ink"
         style={{ fontFamily: 'var(--salon-font-mono)' }}

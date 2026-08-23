@@ -39,7 +39,7 @@ export default async function MediaPage() {
 
   // Uploads are keyed <post_id>/<uuid>.<ext>, so the top level is one folder
   // per post and the files sit one level down.
-  const { data: folders } = await bucket.list('', { limit: 200 })
+  const { data: folders, error: listError } = await bucket.list('', { limit: 200 })
   const postFolders = (folders ?? []).filter((f) => !f.id)
 
   const { data: posts } = await supabase.from('posts').select('id, title')
@@ -73,20 +73,25 @@ export default async function MediaPage() {
 
   return (
     <>
-      <div className="mb-8">
-        <h1 className="salon-h1">Media</h1>
-        <p className="mt-1 text-sm text-salon-muted">
-          {assets.length === 0
-            ? 'Images uploaded from the editor appear here.'
-            : `${assets.length} image${assets.length === 1 ? '' : 's'} · ${formatBytes(totalBytes)}`}
-        </p>
-      </div>
+      {/* The subtitle slot holds a COUNT, never prose. It used to explain where
+          images come from when empty, which said the same thing the empty plate
+          below already says. */}
+      <header className="mb-8 flex flex-wrap items-end justify-between gap-x-8 gap-y-4">
+        <div>
+          <h1 className="salon-h1">Media</h1>
+          <p className="salon-label mt-4">
+            {`${assets.length} image${assets.length === 1 ? '' : 's'} · ${formatBytes(totalBytes)}`}
+          </p>
+        </div>
+      </header>
 
       {assets.length === 0 ? (
         // §1.2/1.3: a plate, not a dashed card. Nothing here is a drop target,
         // so it should not draw itself as one.
         <p className="salon-plate px-6 py-16 text-center text-sm text-salon-muted">
-          Nothing uploaded yet. Drag an image into a post and it lands here.
+          {listError
+            ? 'Could not reach the media store. This is not an empty library.'
+            : 'Nothing uploaded yet. Drag an image into a post and it lands here.'}
         </p>
       ) : (
         <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
@@ -140,7 +145,7 @@ export default async function MediaPage() {
                   </span>
                 )}
                 <p
-                  className="mt-0.5 text-[11px] text-salon-muted"
+                  className="mt-1 text-[11px] text-salon-muted"
                   style={{ fontFamily: 'var(--salon-font-mono)' }}
                 >
                   {formatBytes(asset.size)}

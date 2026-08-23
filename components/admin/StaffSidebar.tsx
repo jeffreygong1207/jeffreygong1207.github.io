@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Arrow from '@/components/staff/Arrow'
 import { usePathname } from 'next/navigation'
 
 // The URL contract for the staff area. Every feature builds against these
@@ -96,9 +97,9 @@ export default function StaffSidebar({ email }: { email: string }) {
         <hr className="salon-hairline mb-3 hidden w-full md:block" />
         <Link
           href="/blog"
-          className={`block ${ROW} py-1.5 text-sm text-salon-muted transition-colors ${EASE} hover:text-salon-ink ${FOCUS}`}
+          className={`block ${ROW} py-2 text-sm text-salon-muted transition-colors ${EASE} hover:text-salon-ink ${FOCUS}`}
         >
-          View site &rarr;
+          View site <Arrow />
         </Link>
         {/* --salon-muted, not --salon-subtle: #71857A on the plate is under the
             4.5:1 floor, and neither the signed-in account nor the only
@@ -117,7 +118,7 @@ export default function StaffSidebar({ email }: { email: string }) {
                text and then fixes only its colour; 11px is fine-print size for
                the only sign-out control in the product. ROW is padding alone,
                so nothing here is width-constrained. */
-            className={`${ROW} py-1.5 text-[13px] text-salon-muted transition-colors ${EASE} hover:text-salon-ink ${FOCUS}`}
+            className={`${ROW} py-2 text-[13px] text-salon-muted transition-colors ${EASE} hover:text-salon-ink ${FOCUS}`}
           >
             Sign out
           </button>

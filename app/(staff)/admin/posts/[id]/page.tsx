@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Arrow from '@/components/staff/Arrow'
 import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import PostEditor from '@/components/admin/PostEditor'
@@ -34,7 +35,7 @@ export default async function EditPostPage({
           className="salon-focus text-[11px] uppercase tracking-[0.2em] text-[color:var(--salon-sheet-ink)] opacity-70 transition-opacity hover:opacity-100"
           style={{ fontFamily: 'var(--salon-font-mono)' }}
         >
-          &larr; Posts
+          <Arrow direction="left" /> Posts
         </Link>
       </div>
 

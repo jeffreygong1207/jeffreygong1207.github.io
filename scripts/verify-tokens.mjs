@@ -30,7 +30,7 @@
  *   node scripts/verify-tokens.mjs
  *   node scripts/verify-tokens.mjs --dir .next/static
  *   node scripts/verify-tokens.mjs --live https://jeffreygong.dev/
- *   node scripts/verify-tokens.mjs --live https://jeffreygong.dev/admin --cookie "$COOKIE"
+ *   node scripts/verify-tokens.mjs --live https://jeffreygong.dev/about   (public, no cookie)
  *
  * /admin is behind Google OAuth, so the live half needs either a session
  * cookie (copy it out of DevTools > Application > Cookies; it is a secret,
@@ -392,8 +392,13 @@ if (!liveUrl) {
     'This checked the build output only. A green build is not evidence the deploy ' +
       'is correct — the last drop happened between a green build and the CDN. Verify ' +
       'the deploy itself:\n' +
-      '  node scripts/verify-tokens.mjs --live https://jeffreygong.dev/admin --cookie "$SALON_VERIFY_COOKIE"\n' +
-      'or, in DevTools on the deployed page:\n' +
+      '  node scripts/verify-tokens.mjs --live https://jeffreygong.dev/about\n' +
+      'A PUBLIC route, and no cookie: globals.css is imported by the root layout, so\n' +
+      'the token layer ships to every page. The staff routes need a session and the\n' +
+      'cookie is usually not to hand, which made the check easy to skip — and this is\n' +
+      'exactly the layer that went missing the time a green build served a white page.\n' +
+      'Add --cookie "$SALON_VERIFY_COOKIE" with a staff URL only to check module CSS.\n' +
+      'Or, in DevTools on the deployed page:\n' +
       "  getComputedStyle(document.documentElement).getPropertyValue('--salon-plate')\n" +
       `  -> expected \`${expected.get('--salon-plate')}\`; an empty string is the failure.`
   )
