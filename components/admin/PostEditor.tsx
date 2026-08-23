@@ -103,7 +103,32 @@ export default function PostEditor({ post }: { post: Post }) {
         // Size, leading, face and ink all come from `.salon-sheet` on the
         // wrapper — 18.5px on 1.66 in Newsreader across a 592px measure — so
         // nothing is restated here.
-        class: 'prose-editor focus:outline-none min-h-[24rem]',
+        //
+        // Focus was the exception. A bare `focus:outline-none` left the
+        // largest focusable surface on the page marked by nothing but a caret
+        // parked at the document start, while the two fields directly above it
+        // each take a struck underline. ProseMirror stamps
+        // `.ProseMirror-focused` on this element, which on a text-editing
+        // surface is where `:focus-visible` resolves anyway — pointer and
+        // keyboard alike — so the two states stay in step.
+        //
+        // A 24rem block takes a margin rule where a single-line field takes an
+        // underline, and the post rows already mark focus-within that way.
+        // `-ml-4 pl-4` cancel, so the 592px measure and the text edge hold
+        // still and the 2px inset rule lands in the gutter clear of the first
+        // glyph; 1rem stays inside the column's 1.5rem padding.
+        //
+        // `outline-hidden`, not `outline-none`: v4's `outline-none` is
+        // `outline-style: none`, and forced colours discard box-shadow, so
+        // that pairing would leave this surface with no indicator at all.
+        // `outline-hidden` ships a transparent 2px outline inside
+        // `@media (forced-colors: active)`, which forced colours repaint. The
+        // title and subtitle reach the same end one file over by a different
+        // route — an explicit `Highlight` outline in the same query.
+        class: [
+          'prose-editor min-h-[24rem] -ml-4 pl-4 focus:outline-hidden',
+          '[&.ProseMirror-focused]:shadow-[inset_2px_0_0_0_var(--sheet-accent)]',
+        ].join(' '),
       },
       handlePaste(view, event) {
         const file = event.clipboardData?.files?.[0]

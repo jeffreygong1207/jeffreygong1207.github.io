@@ -129,13 +129,23 @@
     0 0 0 0.5px rgba(0, 0, 0, 0.8);
 }
 
-/* The cover glass, over the whole face — bezel included, as on the real object.
+/* The cover glass. It reads across the FRAME only: .screen is lifted above this
+   layer (see its z-index) so the film never composites over screen text.
+   Full-face was a contrast bug, not a highlight. Over the sheet the sweep is
+   worth ~2/255 — invisible — while it lifts BOTH ink and paper and so collapses
+   the ratio: --ink-2 #5E5852 on #EFEAE7 goes 5.88:1 -> 4.33:1 at the 0.13 peak,
+   and where the 104° sweep crosses the 168° haze the composite reaches
+   1-(1-.13)(1-.055) = 0.178 and the .mark monogram on its #E7E1DA chip bottoms
+   out near 3.9:1. Halving the stops does not buy the fix either: 0.08 over 0.03
+   still composites to 0.108 in the overlap and the chip lands at 4.29:1, since
+   the chip's own crossing point is ~0.081. Stopping at the aperture returns the
+   full designed 5.88:1 / 5.40:1 and keeps them independent of gradient
+   arithmetic, so the alphas below stay at full strength — over the dark bezel,
+   the only place the sweep was ever legible, they cost nothing.
    Three layers and no more: a broad sky reflection, ONE specular sweep at the
    104° laminate angle the crate already uses, and the lit edge above.
    Fresnel for n=1.5 is flat at 4.0% reflectance until ~50°, so these alphas are
-   .02–.13; a white streak at 0.2 is the classic fake-glass tell. Against the
-   light screen the sweep is all but invisible and against the dark bezel it
-   reads clearly, which is exactly what a sheet of glass does. */
+   .02–.13; a white streak at 0.2 is the classic fake-glass tell. */
 .device::after {
   content: '';
   position: absolute;
@@ -162,6 +172,14 @@
 .screen {
   flex: 1;
   min-width: 0;
+
+  /* Above .device::after (z-index 2) — the cover glass stops at the screen
+     aperture. A flex item does take z-index without being positioned, but the
+     accessibility of every row hangs on this stack, so it is declared rather
+     than inferred from that rule. */
+  position: relative;
+  z-index: 3;
+
   border-radius: var(--r-screen);
   background: var(--salon-sheet, #efeae7);
   /* The bezel's own shadow falling on the glass, plus the seam. */

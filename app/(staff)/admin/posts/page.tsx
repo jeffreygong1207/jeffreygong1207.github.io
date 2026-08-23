@@ -30,13 +30,31 @@ const STATUS_DOT: Record<PostStatus, string> = {
 // element.
 const PLATE = 'bg-salon-plate shadow-[inset_0_0_0_1px_rgba(221,238,255,0.14)]'
 
-// Two channels on a row, not one. `bg-salon-raised` alone is a small luminance
-// step against the plate; the inset left hairline gives the row a lit edge at
-// the same time. `focus-within` because the hover state lives on the <li> while
-// the thing that takes focus is the title link inside it — without this, a
-// keyboard user lands on a row that lights nothing.
+// Two channels on a row, not one. The lift is a small luminance step against the
+// plate; the inset left hairline gives the row a lit edge at the same time.
+// `focus-within` because the hover state lives on the <li> while the thing that
+// takes focus is the title link inside it — without this, a keyboard user lands
+// on a row that lights nothing.
+//
+// The lift surface is written out here rather than taken from `bg-salon-raised`.
+// --salon-muted #93A69B measures 4.269:1 on --salon-raised #314034, under the
+// 4.5:1 floor for text this size, so a row lifting to the token puts its own
+// 11px metadata line below AA for exactly as long as a pointer or the keyboard
+// is on it — i.e. the row you are reading is the one that fails. #2E3C31 is that
+// same step one point down: muted 4.52:1, ink 10.39:1, still 1.47:1 above the
+// plate so the lift keeps reading, and ΔL* 1.68 from the token, inside a JND, so
+// it is not a visible change of colour. The durable fix is --salon-raised itself
+// in app/globals.css and its mirror in the @theme block; that token is outside
+// this change, so /admin/media (TILE) and /admin (PLATE_INTERACTIVE) still lift
+// to it and still measure 4.27:1.
 const ROW_STATE =
-  'transition-[background-color,box-shadow] duration-[240ms] ease-[cubic-bezier(0.25,1,0.5,1)] hover:bg-salon-raised hover:shadow-[inset_2px_0_0_0_rgba(221,238,255,0.30)] focus-within:bg-salon-raised focus-within:shadow-[inset_2px_0_0_0_rgba(221,238,255,0.30)]'
+  'group transition-[background-color,box-shadow] duration-[240ms] ease-[cubic-bezier(0.25,1,0.5,1)] hover:bg-[#2E3C31] hover:shadow-[inset_2px_0_0_0_rgba(221,238,255,0.30)] focus-within:bg-[#2E3C31] focus-within:shadow-[inset_2px_0_0_0_rgba(221,238,255,0.30)]'
+
+// The muted lines answer the lift by going to --salon-ink as well — a second
+// channel, not the thing holding the row at AA. Both use the row's curve so the
+// surface and its text arrive at the same time.
+const ROW_INK =
+  'transition-colors duration-[240ms] ease-[cubic-bezier(0.25,1,0.5,1)] group-hover:text-salon-ink group-focus-within:text-salon-ink'
 
 // This page is a server component, so the date is formatted once on the server —
 // where the zone is UTC on Vercel, not the author's. Without an explicit zone,
@@ -134,7 +152,10 @@ export default async function PostsIndex({
                 >
                   {post.title}
                 </Link>
-                <p className="mt-1 truncate text-[11px] text-salon-muted" style={MONO}>
+                <p
+                  className={`mt-1 truncate text-[11px] text-salon-muted ${ROW_INK}`}
+                  style={MONO}
+                >
                   <span className="capitalize">{post.status}</span>
                   {' · '}
                   {post.reading_minutes} min
@@ -151,14 +172,14 @@ export default async function PostsIndex({
               <div className="flex shrink-0 items-center gap-3 text-[13px]">
                 <Link
                   href={`/admin/posts/${post.id}`}
-                  className="text-salon-muted transition-colors hover:text-salon-ink salon-focus"
+                  className={`text-salon-muted hover:text-salon-ink salon-focus ${ROW_INK}`}
                 >
                   Edit<span className="sr-only"> {post.title}</span>
                 </Link>
                 {post.status !== 'draft' && (
                   <Link
                     href={`/blog/${post.slug}`}
-                    className="text-salon-muted transition-colors hover:text-salon-ink salon-focus"
+                    className={`text-salon-muted hover:text-salon-ink salon-focus ${ROW_INK}`}
                   >
                     View<span className="sr-only"> {post.title}</span>
                   </Link>
