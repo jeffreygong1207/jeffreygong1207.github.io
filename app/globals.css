@@ -1,5 +1,58 @@
 @import "tailwindcss";
 
+/* ---------------------------------------------------------------------------
+   SALON — staff-side design tokens.
+
+   This file is imported by app/layout.tsx and therefore ships to every public
+   page, so every selector below is scoped under a `.salon*` class. Nothing here
+   changes a public route: `.salon-shell` only ever exists under app/(staff)/.
+
+   Tokens live here and NOT in tailwind.config.ts. Tailwind 4 is CSS-first
+   (`@import "tailwindcss"` with no `@config` directive), so tailwind.config.ts
+   is dead code — verified empirically, its `darkMode:'class'` produces zero
+   `.dark ` selectors in the built CSS. Do not "fix" it.
+
+   Ground is a mid-dark exhibition wall at LRV 2.8%: gallery practice lights an
+   exhibit 5:1 to 10:1 over its surround, and on a near-black ground that puts
+   every object at #232323, too dark to show colour.
+   --------------------------------------------------------------------------- */
+
+:root {
+  --salon-ground: #233226;
+  --salon-sunken: #1B2820;
+  --salon-plate: #1F2D23;
+  --salon-raised: #314034;
+  --salon-line: #3F4F42;
+  --salon-ink: #EDF4EE;
+  --salon-muted: #93A69B;
+  --salon-subtle: #71857A;
+  --salon-accent: #DEA279;
+  --salon-accent-d: #A05A28;
+  --salon-sheet: #EFEAE7;
+  --salon-sheet-ink: #2C2926;
+  --salon-gilt: #D9B45F;
+}
+
+/* Same values again as literals so `bg-salon-ground`, `text-salon-ink`, etc.
+   compile as Tailwind utilities. Declared literally rather than as
+   `var(--salon-ground)` so the utilities keep working no matter how Tailwind
+   chooses to emit theme variables. */
+@theme {
+  --color-salon-ground: #233226;
+  --color-salon-sunken: #1B2820;
+  --color-salon-plate: #1F2D23;
+  --color-salon-raised: #314034;
+  --color-salon-line: #3F4F42;
+  --color-salon-ink: #EDF4EE;
+  --color-salon-muted: #93A69B;
+  --color-salon-subtle: #71857A;
+  --color-salon-accent: #DEA279;
+  --color-salon-accent-d: #A05A28;
+  --color-salon-sheet: #EFEAE7;
+  --color-salon-sheet-ink: #2C2926;
+  --color-salon-gilt: #D9B45F;
+}
+
 @layer base {
   body {
     @apply font-sans;
@@ -91,4 +144,134 @@
   float: left;
   height: 0;
   pointer-events: none;
+}
+
+
+/* ===========================================================================
+   SALON — staff-side surfaces. FROZEN after the foundation commit: feature
+   work uses co-located `*.module.css`, not this file.
+   =========================================================================== */
+
+/* The staff shell. Unlayered on purpose: app/layout.tsx hardcodes
+   `<body className="bg-white ...">` and is off-limits, and unlayered CSS beats
+   Tailwind's `@layer utilities`. Provably inert on every public page because
+   `.salon-shell` never exists there. The shell also paints the ground itself,
+   so the area is still correct where `:has()` is unavailable. */
+body:has(.salon-shell) {
+  background-color: var(--salon-ground);
+  transition: background-color 0.5s ease;
+}
+
+.salon-shell {
+  /* Resolved here, not on :root, because the next/font variables are set by a
+     class on this same element. A var() inside a custom property is substituted
+     on the element that declares it. */
+  --salon-font-display: var(--font-cinzel), "EB Garamond", Georgia, serif;
+  --salon-font-ui: var(--font-karla), ui-sans-serif, system-ui, sans-serif;
+  --salon-font-read: var(--font-newsreader), Georgia, "Times New Roman", serif;
+  --salon-font-mono: var(--font-plex-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  --salon-font-grotesk: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
+  --salon-font-garamond: var(--font-garamond), Georgia, serif;
+
+  background-color: var(--salon-ground);
+  color: var(--salon-ink);
+  font-family: var(--salon-font-ui);
+  /* Section 2.5: the move between the dark shell and the light reading sheet is
+     a 500ms cross-fade of the GROUND, not a hard cut and not a gradient. */
+  transition: background-color 0.5s ease, color 0.5s ease;
+}
+
+/* A reading/writing surface anywhere in the shell takes the whole ground light.
+   Use `.salon-sheet` ONLY for a full reading/writing surface — never a card. A
+   large light rectangle floating on a dark ground is a glare bomb at night, and
+   no production reading surface does it. */
+body:has(.salon-shell .salon-sheet) {
+  background-color: var(--salon-sheet);
+}
+.salon-shell:has(.salon-sheet) {
+  background-color: var(--salon-sheet);
+  color: var(--salon-sheet-ink);
+}
+
+/* The centred content column. A page opts out of the measure by rendering an
+   element carrying `.salon-wide` — the bookcase is 566px wide rotated -21deg at
+   3200px perspective and does not want a 64rem cage. */
+.salon-column {
+  width: 100%;
+  max-width: 64rem;
+  margin-inline: auto;
+  padding: 2.5rem 1.5rem;
+}
+@media (min-width: 768px) {
+  .salon-column {
+    padding: 2.5rem;
+  }
+}
+.salon-column:has(.salon-wide) {
+  max-width: none;
+  padding-inline: 0;
+}
+.salon-wide {
+  width: 100%;
+}
+
+/* ONE screen-space grain overlay for the whole staff area (2.2 rule 16). Per
+   object grain rasterises at pre-transform size and blurs when the 3D transform
+   scales it. Must stay a SIBLING of the content — never a wrapper around a
+   preserve-3d subtree. No feature adds a second one. */
+.salon-grain {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  mix-blend-mode: overlay;
+  opacity: 0.1;
+}
+
+/* 1.2 / 1.3: objects sit on a plate 1-4% off the page — DARKER than the page,
+   not a bordered card. No border, no border-radius, no drop shadow: a drop
+   shadow is invisible on #233226, so the edge is an inset hairline instead. */
+.salon-plate {
+  background: var(--salon-plate);
+  box-shadow: inset 0 0 0 1px rgba(221, 238, 255, 0.14);
+}
+
+.salon-hairline {
+  border: 0;
+  border-top: 1px solid var(--salon-line);
+  height: 0;
+  margin: 0;
+}
+
+/* 2.5: the hard cut out of 3D. Nothing on this surface is 3D. */
+.salon-sheet {
+  background-color: var(--salon-sheet);
+  color: var(--salon-sheet-ink);
+  font-family: var(--salon-font-read);
+  font-size: 18.5px;
+  line-height: 1.66;
+  max-width: 592px;
+  transition: background-color 0.5s ease, color 0.5s ease;
+}
+
+/* Section 3: reduced motion means the scene STOPS MOVING ON ITS OWN. It does
+   not disappear. Autonomous drift and transitions go; pointer-driven response
+   stays, because that is written to transform/style directly rather than
+   animated. Shared block — features gate JS motion with
+   components/staff/useReducedMotion.ts and add no second media query. */
+@media (prefers-reduced-motion: reduce) {
+  .salon-shell,
+  .salon-shell *,
+  .salon-shell *::before,
+  .salon-shell *::after,
+  body:has(.salon-shell) {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    animation-delay: 0s !important;
+    transition-duration: 0.01ms !important;
+    transition-delay: 0s !important;
+    scroll-behavior: auto !important;
+  }
 }

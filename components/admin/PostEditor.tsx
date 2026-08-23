@@ -11,6 +11,8 @@ import { createClient } from '@/lib/supabase/client'
 import { savePost, deletePost } from '@/lib/actions'
 import { slugify } from '@/lib/prosemirror'
 import type { Post, PostStatus, ProseMirrorNode } from '@/lib/types'
+import Sheet, { SheetSurface } from '@/components/staff/Sheet'
+import styles from '@/components/staff/Sheet.module.css'
 import EditorToolbar from './EditorToolbar'
 
 const EMPTY_DOC: ProseMirrorNode = { type: 'doc', content: [{ type: 'paragraph' }] }
@@ -56,7 +58,7 @@ export default function PostEditor({ post }: { post: Post }) {
     immediatelyRender: false,
     extensions: [
       StarterKit.configure({ heading: { levels: [2, 3, 4] } }),
-      Image.configure({ HTMLAttributes: { class: 'rounded-lg w-full' } }),
+      Image.configure({ HTMLAttributes: { class: 'w-full' } }),
       Link.configure({
         openOnClick: false,
         autolink: true,
@@ -70,7 +72,10 @@ export default function PostEditor({ post }: { post: Post }) {
     content: (post.content?.content?.length ? post.content : EMPTY_DOC) as object,
     editorProps: {
       attributes: {
-        class: 'prose-editor focus:outline-none min-h-[24rem] text-[1.0625rem] leading-[1.75] text-gray-800',
+        // Size, leading, face and ink all come from `.salon-sheet` on the
+        // wrapper — 18.5px on 1.66 in Newsreader across a 592px measure — so
+        // nothing is restated here.
+        class: 'prose-editor focus:outline-none min-h-[24rem]',
       },
       handlePaste(view, event) {
         const file = event.clipboardData?.files?.[0]
@@ -106,7 +111,6 @@ export default function PostEditor({ post }: { post: Post }) {
   function save(nextStatus: PostStatus) {
     if (!editor) return
     setMessage(null)
-    setStatus(nextStatus)
 
     startTransition(async () => {
       const result = await savePost({
@@ -124,6 +128,10 @@ export default function PostEditor({ post }: { post: Post }) {
         setMessage(result.error)
         return
       }
+      // Only after the row actually took it. Setting this before the await left
+      // the rail claiming a status the database had rejected -- a taken slug
+      // would show "Published" over a post that was still a draft.
+      setStatus(nextStatus)
       setSlug(result.slug)
       setMessage(nextStatus === 'published' ? 'Published' : 'Saved')
 
@@ -144,65 +152,73 @@ export default function PostEditor({ post }: { post: Post }) {
   }
 
   return (
-    <div className="grid gap-10 pb-24 lg:grid-cols-[1fr_18rem]">
-      <div className="min-w-0">
+    <SheetSurface className="grid gap-10 pb-24 lg:grid-cols-[1fr_18rem]">
+      <Sheet>
         <input
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder="Title"
-          className="mb-3 w-full border-0 p-0 text-3xl font-bold tracking-tight text-gray-900 placeholder-gray-300 focus:outline-none md:text-4xl"
+          aria-label="Title"
+          className={styles.title}
         />
         <input
           value={subtitle}
           onChange={(e) => setSubtitle(e.target.value)}
           placeholder="Subtitle"
-          className="mb-8 w-full border-0 p-0 text-lg text-gray-500 placeholder-gray-300 focus:outline-none"
+          aria-label="Subtitle"
+          className={styles.subtitle}
         />
 
         {coverUrl && (
-          <div className="relative mb-8">
+          <div className={styles.cover}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={coverUrl} alt="" className="w-full rounded-lg" />
+            <img src={coverUrl} alt="" className={styles.coverImage} />
             <button
+              type="button"
               onClick={() => setCoverUrl(null)}
-              className="absolute right-3 top-3 rounded-md bg-black/60 px-3 py-1 text-xs text-white"
+              className={styles.coverRemove}
             >
-              Remove
+              Remove<span className="sr-only"> cover image</span>
             </button>
           </div>
         )}
 
         {editor && <EditorToolbar editor={editor} onUploadImage={uploadImage} />}
         <EditorContent editor={editor} />
-      </div>
+      </Sheet>
 
-      <aside className="space-y-6 lg:sticky lg:top-8 lg:self-start">
+      <aside className={`${styles.rail} space-y-6 lg:sticky lg:top-8 lg:self-start`}>
         <div className="flex gap-2">
           <button
+            type="button"
             onClick={() => save('draft')}
             disabled={pending}
-            className="flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 disabled:opacity-60"
+            className={`${styles.btn} ${styles.btnGhost} flex-1`}
           >
             Save draft
           </button>
           <button
+            type="button"
             onClick={() => save('published')}
             disabled={pending}
-            className="flex-1 rounded-md bg-gray-900 px-3 py-2 text-sm font-medium text-white transition hover:bg-gray-700 disabled:opacity-60"
+            className={`${styles.btn} ${styles.btnPrimary} flex-1`}
           >
             {status === 'published' ? 'Update' : 'Publish'}
           </button>
         </div>
 
-        {message && (
-          <p className="rounded-md bg-gray-100 px-3 py-2 text-sm text-gray-700">{message}</p>
-        )}
+        {/* Kept in the tree so the region exists before it has anything to say;
+            a live region inserted together with its text often goes unread. */}
+        <p aria-live="polite" className={message ? styles.message : 'sr-only'}>
+          {message}
+        </p>
 
-        <Field label="Status">
+        <Field id="post-status" label="Status">
           <select
+            id="post-status"
             value={status}
             onChange={(e) => setStatus(e.target.value as PostStatus)}
-            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+            className={styles.control}
           >
             <option value="draft">Draft</option>
             <option value="published">Published</option>
@@ -210,61 +226,73 @@ export default function PostEditor({ post }: { post: Post }) {
           </select>
         </Field>
 
-        <Field label="URL slug" hint={slug ? `/blog/${slugify(slug)}` : 'Derived from the title'}>
+        <Field
+          id="post-slug"
+          label="URL slug"
+          hint={slug ? `/blog/${slugify(slug)}` : 'Derived from the title'}
+        >
           <input
+            id="post-slug"
             value={slug}
             onChange={(e) => setSlug(e.target.value)}
             placeholder={slugify(title) || 'my-post'}
-            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+            aria-describedby="post-slug-hint"
+            className={styles.control}
           />
         </Field>
 
-        <Field label="Tags" hint="Comma separated, up to 8">
+        <Field id="post-tags" label="Tags" hint="Comma separated, up to 8">
           <input
+            id="post-tags"
             value={tags}
             onChange={(e) => setTags(e.target.value)}
             placeholder="systems, berkeley"
-            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+            aria-describedby="post-tags-hint"
+            className={styles.control}
           />
         </Field>
 
-        <Field label="Cover image">
+        <Field id="post-cover" label="Cover image">
           <input
             ref={coverInput}
             type="file"
             accept="image/*"
             onChange={handleCover}
             className="hidden"
+            aria-label="Choose a cover image file"
           />
+          {/* A <label for> does not name a button, so the visible label is
+              pulled in explicitly and the button's own text is kept after it. */}
           <button
+            type="button"
+            id="post-cover"
+            aria-labelledby="post-cover-label post-cover"
             onClick={() => coverInput.current?.click()}
             disabled={uploading}
-            className="w-full rounded-md border border-dashed border-gray-300 px-3 py-2 text-sm text-gray-600 transition hover:bg-gray-50 disabled:opacity-60"
+            className={`${styles.btn} ${styles.btnDashed}`}
           >
             {uploading ? 'Uploading…' : coverUrl ? 'Replace' : 'Upload'}
           </button>
         </Field>
 
-        <div className="border-t border-gray-200 pt-6 text-sm text-gray-400">
-          {post.reading_minutes} min read
-        </div>
+        {/* reading_minutes is GENERATED ALWAYS STORED: read it, never write it. */}
+        <p className={styles.readTime}>{post.reading_minutes} min read</p>
 
         {confirmDelete ? (
           <div className="space-y-2">
-            <p className="text-sm text-gray-700">Delete this post permanently?</p>
+            <p className={styles.confirmText}>Delete this post permanently?</p>
             <div className="flex gap-2">
               <form
                 action={async () => {
                   await deletePost(post.id)
                 }}
               >
-                <button className="rounded-md bg-red-600 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-red-700">
-                  Delete
-                </button>
+                <button className={`${styles.btn} ${styles.btnDangerSolid}`}>Delete</button>
               </form>
               <button
+                type="button"
                 onClick={() => setConfirmDelete(false)}
-                className="rounded-md border border-gray-300 px-3 py-1.5 text-sm text-gray-700 transition hover:bg-gray-50"
+                className={`${styles.btn} ${styles.btnGhost}`}
               >
                 Cancel
               </button>
@@ -272,33 +300,43 @@ export default function PostEditor({ post }: { post: Post }) {
           </div>
         ) : (
           <button
+            type="button"
             onClick={() => setConfirmDelete(true)}
-            className="text-sm text-red-600 transition hover:text-red-800"
+            className={`${styles.btn} ${styles.btnDanger}`}
           >
             Delete post
           </button>
         )}
       </aside>
-    </div>
+    </SheetSurface>
   )
 }
 
 function Field({
+  id,
   label,
   hint,
   children,
 }: {
+  id: string
   label: string
   hint?: string
   children: React.ReactNode
 }) {
   return (
     <div>
-      <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-gray-500">
+      {/* The label was previously bound to nothing at all: no htmlFor, no
+          wrapping. Status, slug, tags and cover each had zero programmatic
+          name. The id is threaded through so every control has one. */}
+      <label id={`${id}-label`} htmlFor={id} className={styles.railLabel}>
         {label}
       </label>
       {children}
-      {hint && <p className="mt-1 text-xs text-gray-400">{hint}</p>}
+      {hint && (
+        <p id={`${id}-hint`} className={styles.railHint}>
+          {hint}
+        </p>
+      )}
     </div>
   )
 }

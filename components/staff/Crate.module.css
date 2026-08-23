@@ -1,0 +1,395 @@
+/* ===========================================================================
+   THE CRATE — vinyl packshot geometry, spec 2.3.
+
+   Every proportion below is IEC 60098:2020 measured against a real 12in LP,
+   ported from design/packshot.html. They are measurements, not approximations:
+   a 301.6mm disc in a 314.3mm jacket is 0.9596, and rounding it to 0.96 is
+   visible as a hairline of disc peeping past the sleeve's top edge.
+
+   ZERO ROTATION. No transform, no rotateY, no perspective anywhere in this
+   file. An LP jacket spine is 1.0% of the face — about 3px at any render size,
+   which the eye reads as a border artifact rather than as depth. Depth here is
+   occlusion (disc behind sleeve) plus the one specular sweep (.lam). The only
+   transforms present are 2D translate(-50%,-50%) centring on the disc label,
+   which is not a pose.
+
+   app/globals.css is frozen after the foundation commit, so all of this is
+   module-scoped. Salon tokens are read as `var(--salon-*)` — NEVER
+   `var(--color-salon-*)`, which is Tailwind's `@theme` mirror and is
+   tree-shaken to whichever utilities the build actually saw.
+   =========================================================================== */
+
+.page {
+  padding-block-end: 3rem;
+}
+
+.head {
+  margin-bottom: 2.75rem;
+}
+
+.title {
+  font-family: var(--salon-font-display);
+  font-size: clamp(1.75rem, 1.2rem + 1.6vw, 2.5rem);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--salon-ink);
+  margin: 0;
+}
+
+.standfirst {
+  margin: 0.85rem 0 0;
+  max-width: 46ch;
+  font-family: var(--salon-font-read);
+  font-size: 1rem;
+  line-height: 1.6;
+  /* Spec 1.1 calls --salon-muted 4.4:1 and reserves it for secondary text. This
+     is a standfirst, not body copy — the body of this page is the eleven
+     objects — but the spec's number is also stale: #93A69B on #233226 measures
+     5.04:1, so it clears the 4.5:1 body floor either way. */
+  color: var(--salon-muted);
+}
+
+/* --salon-muted, not --salon-subtle. The token table marks subtle as tertiary
+   and this line looks like tertiary furniture, but it is the only place the
+   catalogue range AC-001—AC-011 appears, so it carries information nothing else
+   on the page does. #71857A on #233226 measures 3.30:1, under the 4.5:1 floor;
+   #93A69B takes it to 5.04:1. */
+.count {
+  display: block;
+  margin-top: 1.15rem;
+  font-family: var(--salon-font-mono);
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--salon-muted);
+}
+
+/* --------------------------------------------------------------------------
+   The crate itself. --cr-jacket is the ONE size input: everything else is a
+   multiple of it, so the whole grid rescales from this line. Each shot is
+   1.5x the jacket wide because the disc slides right by one jacket radius and
+   is itself 0.9596 wide (0.5 + 0.9596 = 1.46), and that overhang must not
+   collide with the neighbouring column.
+
+   The 280px ceiling is deliberate and was checked against both constraints
+   before being left alone. design/label.mjs draws at 330px, and every cqw on a
+   cover resolves against this number, so the temptation is to match it. Two
+   reasons not to:
+
+   1. It cannot buy 8px legibility, which is the only reason worth resizing for.
+      The sleeve type runs 1.4-2.2cqw, which needs a jacket of 571px / 533px /
+      500px / 364px respectively to clear spec 3's 8px floor. No jacket that fits
+      a two-column grid gets close, so the sleeve type is decorative at every
+      size and is aria-hidden accordingly — see the META LINE block below.
+   2. .salon-column is 64rem capped with 2.5rem of padding, so the content box
+      tops out at 944px, and auto-fill fits floor((944 + 40) / (J * 1.5 + 40))
+      columns. That is 2.14 at 280px, 2.01 at 300px and 1.84 at 330px: past
+      ~285px the second column is riding on sub-pixel rounding, and at 330px the
+      crate is a single column of eleven records.
+
+   Raise it only with that second calculation redone against whatever the column
+   width is at the time.
+   -------------------------------------------------------------------------- */
+.crate {
+  --cr-jacket: clamp(180px, 40vw, 280px);
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(calc(var(--cr-jacket) * 1.5), 1fr));
+  gap: 3.75rem 2.5rem;
+  align-items: start;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.item {
+  margin: 0;
+}
+
+.shot {
+  position: relative;
+  width: calc(var(--cr-jacket) * 1.5);
+}
+
+/* The packshot is the link when a project has somewhere to go. Six of eleven
+   have `links: {}` and render `.plain` instead: not focusable, no pointer
+   cursor, no hover response, so they do not look interactive (spec 3). */
+.link,
+.plain {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+}
+
+.link:focus-visible {
+  outline: 2px solid var(--salon-accent);
+  outline-offset: 5px;
+}
+
+.stage {
+  position: relative;
+  width: var(--cr-jacket);
+  height: var(--cr-jacket);
+}
+
+/* --------------------------------------------------------------------------
+   DISC — behind the sleeve (z 1 against the sleeve's z 2), slid right by
+   exactly one radius. Occlusion is doing the depth work.
+   -------------------------------------------------------------------------- */
+.disc {
+  position: absolute;
+  top: calc(var(--cr-jacket) * 0.0202);
+  left: calc(var(--cr-jacket) * 0.5);
+  width: calc(var(--cr-jacket) * 0.9596);
+  height: calc(var(--cr-jacket) * 0.9596);
+  border-radius: 50%;
+  z-index: 1;
+  background:
+    /* The broad anisotropic sheen sweeping the groove field. This one gradient
+       is the effect that sells vinyl. */
+    linear-gradient(
+      114deg,
+      rgba(255, 255, 255, 0) 28%,
+      rgba(255, 255, 255, 0.16) 42%,
+      rgba(255, 255, 255, 0.3) 48%,
+      rgba(255, 255, 255, 0.13) 55%,
+      rgba(255, 255, 255, 0) 68%
+    ),
+    /* ONE repeating gradient for the entire groove field. Real density runs to
+       260 grooves per inch, which is 7.7 grooves per pixel here — drawing them
+       individually guarantees moire, not detail. */
+      repeating-radial-gradient(circle at 50% 50%, #0c0c0d 0 2px, #131315 2px 4px),
+    radial-gradient(circle at 50% 50%, #17171a 0 33%, #0e0e10 34%, #131316 78%, #0a0a0b 100%);
+  box-shadow:
+    0 18px 34px -16px rgba(0, 0, 0, 0.9),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.07);
+}
+
+/* 101.6mm label on a 301.6mm disc. */
+.label {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 33.7%;
+  height: 33.7%;
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  overflow: hidden;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.35);
+}
+
+.labelTitle {
+  font-family: var(--salon-font-display);
+  font-size: calc(var(--cr-jacket) * 0.0333);
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  white-space: nowrap;
+}
+
+.labelSide {
+  font-family: var(--salon-font-mono);
+  font-size: calc(var(--cr-jacket) * 0.0197);
+  letter-spacing: 0.2em;
+  white-space: nowrap;
+}
+
+/* 7.24mm spindle hole, filled with the page ground so it reads as a hole. */
+.hole {
+  width: calc(var(--cr-jacket) * 0.0231);
+  height: calc(var(--cr-jacket) * 0.0231);
+  border-radius: 50%;
+  background: var(--salon-ground);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.9);
+}
+
+/* --------------------------------------------------------------------------
+   SLEEVE — in front of the disc.
+
+   container-type: inline-size is MANDATORY and load-bearing. Every cqw in
+   every archetype under ./covers resolves against this element. Remove it and
+   all cover typography computes to zero with no error, in any browser.
+   -------------------------------------------------------------------------- */
+.sleeve {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  overflow: hidden;
+  isolation: isolate;
+  container-type: inline-size;
+  box-shadow:
+    0 26px 44px -20px rgba(0, 0, 0, 0.85),
+    /* Spec 1.3: a drop shadow is invisible on #233226, so an object on the
+       dark ground gets an inset hairline instead. */ inset 0 0 0 1px rgba(221, 238, 255, 0.13);
+}
+
+/* --------------------------------------------------------------------------
+   SLEEVE FURNITURE. Without all five of these the artwork reads as a clean
+   unlit rectangle — and THAT is the tell, not the artwork.
+   -------------------------------------------------------------------------- */
+
+/* Board bump plus the sheen of a laminated jacket: the one specular sweep. */
+.lam {
+  position: absolute;
+  inset: 0;
+  z-index: 8;
+  pointer-events: none;
+  background: linear-gradient(
+    104deg,
+    rgba(255, 255, 255, 0.15) 0%,
+    rgba(255, 255, 255, 0.03) 24%,
+    rgba(0, 0, 0, 0) 50%,
+    rgba(0, 0, 0, 0.13) 86%,
+    rgba(0, 0, 0, 0.24) 100%
+  );
+}
+
+/* Print grain of the jacket board. Distinct from the cover's own stock grain
+   (in ./covers, z 4) and from the single screen-space grain the staff layout
+   ships for the whole scene. Do not add a third. */
+.grain {
+  position: absolute;
+  inset: 0;
+  opacity: 0.19;
+  mix-blend-mode: overlay;
+  z-index: 9;
+  pointer-events: none;
+}
+
+/* Seam down the open right edge. */
+.seam {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  width: 5px;
+  z-index: 7;
+  background: linear-gradient(90deg, rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.24));
+}
+
+/* Ring wear: where the disc has pressed through the board from the inside. The
+   inset-white plus outer-dark 1px pair is what reads as an embossed edge; one
+   alone reads as a drawn circle. */
+.ring {
+  position: absolute;
+  top: 2.5%;
+  left: 2.5%;
+  width: 95%;
+  height: 95%;
+  border-radius: 50%;
+  z-index: 6;
+  pointer-events: none;
+  opacity: 0.16;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.5),
+    0 0 0 1px rgba(0, 0, 0, 0.3);
+}
+
+/* Contact shadow, under everything. Scaled off the jacket so it tracks size. */
+.shadow {
+  position: absolute;
+  left: 6%;
+  right: -30%;
+  bottom: calc(var(--cr-jacket) * -0.0788);
+  height: calc(var(--cr-jacket) * 0.103);
+  z-index: 0;
+  background: radial-gradient(ellipse at 46% 40%, rgba(0, 0, 0, 0.62) 0%, rgba(0, 0, 0, 0) 70%);
+  filter: blur(calc(var(--cr-jacket) * 0.0212));
+  opacity: 0.88;
+  transition: opacity 0.3s ease;
+}
+
+/* --------------------------------------------------------------------------
+   META LINE — flat HTML under the shot. This, not the cover artwork, is where
+   the accessible name of the object lives, and it is the ONLY place: every text
+   node inside .stage is aria-hidden, because all of the sleeve and disc type
+   falls under the 8px floor in spec 3 somewhere in the jacket's 180-280px
+   range. The sleeve is a picture of print, not readable UI — so anything a
+   cover needs to say has to be said here instead.
+   -------------------------------------------------------------------------- */
+.meta {
+  margin-top: 26px;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  width: var(--cr-jacket);
+  border-top: 1px solid var(--salon-line);
+  padding-top: 11px;
+}
+
+.metaTitle {
+  font-family: var(--salon-font-read);
+  font-size: 19px;
+  font-weight: 500;
+  line-height: 1.25;
+  color: var(--salon-ink);
+  transition: color 0.3s ease;
+}
+
+/* Catalogue number rides with the year so it exists as real text at a readable
+   size: the identity strip on the sleeve is 4.48px of deliberately decorative
+   cover typography, and spec 3's exemption for such marks is conditional on
+   exactly this line existing. Do not drop it to make room for anything. */
+.metaFile {
+  flex: none;
+  font-family: var(--salon-font-mono);
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  color: var(--salon-muted);
+  white-space: nowrap;
+}
+
+.link:hover .metaTitle {
+  color: var(--salon-accent);
+}
+
+.link:hover .shadow,
+.link:focus-visible .shadow {
+  opacity: 1;
+}
+
+/* Second destination for the one project that has two. Sits OUTSIDE the
+   packshot anchor: an anchor inside an anchor is invalid and unreachable. */
+.extras {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin: 0.65rem 0 0;
+  width: var(--cr-jacket);
+  padding: 0;
+  list-style: none;
+}
+
+.extra {
+  font-family: var(--salon-font-mono);
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--salon-accent);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.3s ease;
+}
+
+.extra:hover,
+.extra:focus-visible {
+  border-bottom-color: var(--salon-accent);
+}
+
+.extra:focus-visible {
+  outline: 2px solid var(--salon-accent);
+  outline-offset: 3px;
+}
+
+/* The four shared SVG filters. Document-global ids, so they are declared once
+   per page and never once per card. */
+.defs {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+}
