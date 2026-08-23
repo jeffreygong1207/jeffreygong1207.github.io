@@ -209,8 +209,10 @@
 
   Capped at 0.055 because this one does composite over screen text. Measured at
   the worst pair on the page — --ink-2 #5E5852 on the .mark chip #E7E1DA, which
-  is 5.405:1 clean: at 0.055 it holds 4.78:1, and the ceiling before it breaches
-  4.5:1 is 0.06. The stops are the frame sweep's own, shifted for the bezel's
+  is 5.405:1 clean: at 0.055 it holds 4.78:1. An earlier note here gave 0.06 as
+  the ceiling before it breaches 4.5:1; recomputed, 0.06 still measures 4.71:1
+  and the true ceiling is nearer 0.10 — so 0.055 is headroom, not the limit.
+  The stops are the frame sweep's own, shifted for the bezel's
   27.2px projection onto the 145deg axis; the register error is about 7px on a
   121px soft-edged band, which is invisible.
 */
@@ -241,7 +243,10 @@
   }
 
   .device::after,
-  .screen {
+  .screen,
+  /* corner-shape does not inherit. Without this the overlay keeps circular
+     corners inside a squircle aperture — a thin unlit sliver at each corner. */
+  .screen::after {
     corner-shape: squircle;
   }
 

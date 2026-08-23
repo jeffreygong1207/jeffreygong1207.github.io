@@ -50,19 +50,34 @@ function arrayBody(src, anchor, label) {
   throw new Error(`${label}: roles array is unterminated`)
 }
 
-const FIELD = (key) => new RegExp(`${key}\\s*:\\s*['"\`]([^'"\`]*)['"\`]`)
+/**
+ * Matches the OPENING quote and requires the same one to close, so an
+ * apostrophe inside a double-quoted value is just a character. The first
+ * version excluded all three quote marks from the value, which truncated
+ * `"Moody's Analytics"` to `Moody` — and since it truncated the staff copy
+ * identically, two genuinely different employers compared equal and the gate
+ * passed. Employer names with apostrophes are common.
+ */
+const FIELD = (key) => new RegExp(`${key}\\s*:\\s*(['"\`])((?:\\\\.|(?!\\1)[\\s\\S])*)\\1`)
 
 function roles(label, anchor) {
   const src = readFileSync(resolve(ROOT, label), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '')
-  return arrayBody(src, anchor, label)
+  const entries = arrayBody(src, anchor, label)
     .split(/\}\s*,?/)
-    .map((entry) => {
-      const org = entry.match(FIELD('organization'))
-      const pos = entry.match(FIELD('position'))
-      const date = entry.match(FIELD('date'))
-      return org && pos && date ? `${org[1]} — ${pos[1]} — ${date[1]}` : null
-    })
-    .filter(Boolean)
+    .map((e) => e.trim())
+    .filter((e) => /[A-Za-z]/.test(e))
+
+  return entries.map((entry) => {
+    const org = entry.match(FIELD('organization'))
+    const pos = entry.match(FIELD('position'))
+    const date = entry.match(FIELD('date'))
+    if (org && pos && date) return `${org[2]} — ${pos[2]} — ${date[2]}`
+    // NOT dropped. An entry this cannot read is the exact shape drift takes —
+    // a role added with a hoisted constant, a spread, or a helper call for the
+    // date. Silently skipping it let the gate report "in sync (6 roles)" while
+    // the public component rendered 7.
+    return `UNREADABLE ENTRY in ${label}: ${entry.replace(/\s+/g, ' ').slice(0, 90)}`
+  })
 }
 
 const [publicRoles, staffRoles] = SOURCES.map((s) => roles(s.label, s.anchor))

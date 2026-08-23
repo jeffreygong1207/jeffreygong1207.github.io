@@ -37,6 +37,12 @@ const ROOTS = [
   join(ROOT, 'app', '(staff)'),
   join(ROOT, 'components', 'staff'),
   join(ROOT, 'components', 'admin'),
+  // `lib/` renders too. Crate prints {project.description} from lib/projects.ts,
+  // Slate prints {role.description} from lib/experience.ts, and Catalogue prints
+  // titles from lib/coursework.ts. All of that is body copy on a staff page, and
+  // all of it was outside this gate: a design note in a project description
+  // shipped to /admin/projects with the build green.
+  join(ROOT, 'lib'),
 ]
 const EXTENSIONS = new Set(['.ts', '.tsx', '.js', '.jsx', '.mjs', '.css'])
 
@@ -164,6 +170,35 @@ function stripModuleSpecifiers(src) {
 }
 
 /**
+ * Developer diagnostics are not page copy, and are blanked for the same reason
+ * comments are: naming `lib/coursework.ts` inside an invariant that only fires
+ * in development is exactly the right thing to write, and exactly the wrong
+ * thing to print on a page. Covers `throw new Error(...)`, bare `throw ...(`,
+ * and every console method.
+ *
+ * Blanked rather than removed so line numbers survive — a gate that reports the
+ * wrong line sends you to the wrong string.
+ */
+function stripDiagnostics(src) {
+  const head = /\b(?:throw\s+new\s+\w*Error|console\.\w+)\s*\(/g
+  const out = src.split('')
+  let m
+  while ((m = head.exec(src))) {
+    const start = m.index + m[0].length - 1
+    let depth = 0
+    for (let i = start; i < src.length; i++) {
+      if (src[i] === '(') depth++
+      else if (src[i] === ')' && --depth === 0) {
+        for (let j = m.index; j <= i; j++) if (out[j] !== '\n') out[j] = ' '
+        head.lastIndex = i + 1
+        break
+      }
+    }
+  }
+  return out.join('')
+}
+
+/**
  * Everything a reader could end up seeing: JSX text nodes, plus every string and
  * template literal left in the file. Literals are included because plenty of
  * staff copy arrives through a variable — the entrance notes on /admin, the
@@ -234,7 +269,7 @@ for (const dir of ROOTS) {
     const src = readFileSync(file, 'utf8')
     const chunks = file.endsWith('.css')
       ? cssContentChunks(stripCssComments(src))
-      : renderedChunks(stripModuleSpecifiers(stripComments(src)))
+      : renderedChunks(stripDiagnostics(stripModuleSpecifiers(stripComments(src))))
     for (const { text, line } of chunks) {
       for (const raw of text.split('\n')) {
         const trimmed = raw.trim()

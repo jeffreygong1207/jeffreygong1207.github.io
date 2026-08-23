@@ -46,6 +46,44 @@ function splitLayers(value) {
   return out
 }
 
+/** Every `name(...)` call in `str`, matched by balancing parentheses. */
+function balancedCalls(str, name) {
+  const out = []
+  const re = new RegExp(`\\b${name}\\(`, 'g')
+  let m
+  while ((m = re.exec(str))) {
+    let depth = 0
+    for (let i = m.index + name.length; i < str.length; i++) {
+      if (str[i] === '(') depth++
+      else if (str[i] === ')' && --depth === 0) {
+        out.push(str.slice(m.index, i + 1))
+        re.lastIndex = i + 1
+        break
+      }
+    }
+  }
+  return out
+}
+
+/** The layer with its colour function removed, so only lengths remain. */
+function stripColour(layer) {
+  const span = colourSpan(layer)
+  return span ? (layer.slice(0, span[0]) + ' ' + layer.slice(span[1] + 1)).trim() : layer
+}
+
+/** [start, end] indices of the layer's colour function, or null. */
+function colourSpan(layer) {
+  const open = layer.search(/\b(?:rgba?|hsla?|color|oklch|lab|color-mix)\(/)
+  if (open === -1) return null
+  const start = layer.indexOf('(', open)
+  let depth = 0
+  for (let i = start; i < layer.length; i++) {
+    if (layer[i] === '(') depth++
+    else if (layer[i] === ')' && --depth === 0) return [open, i]
+  }
+  return null
+}
+
 /**
  * The alpha argument of the layer's colour, or null if the layer has no colour
  * function at all.
@@ -57,20 +95,14 @@ function splitLayers(value) {
  * for both layers of a stack, found them equal, and passed an inverted stack.
  */
 function alphaArg(layer) {
-  const open = layer.search(/\b(?:rgba?|hsla?|color|oklch|lab)\(/)
-  if (open === -1) return null
+  const span = colourSpan(layer)
+  if (!span) return null
+  const [open, end] = span
   const start = layer.indexOf('(', open)
-  let depth = 0
-  let end = -1
-  for (let i = start; i < layer.length; i++) {
-    if (layer[i] === '(') depth++
-    else if (layer[i] === ')' && --depth === 0) {
-      end = i
-      break
-    }
-  }
-  if (end === -1) return null
   const body = layer.slice(start + 1, end)
+  // color-mix() and friends carry no positional alpha this can read. Say so
+  // rather than guessing 1.0 — a guessed opaque alpha is how a stack passes.
+  if (/^color-mix\(/.test(layer.slice(open))) return null
   const args = splitLayers(body)
   if (args.length >= 4) return args[args.length - 1].trim()
 
@@ -112,8 +144,17 @@ function alphaValues(raw) {
  * ORDER layers against each other — every calc() here is `var(--cr-px) * n`.
  */
 function blurValue(layer) {
-  const calcs = layer.match(/calc\([^()]*(?:\([^()]*\)[^()]*)*\)/g) ?? []
-  let rest = layer
+  // The colour comes off FIRST. Its alpha is routinely a calc(), and leaving it
+  // in the string let it be counted as a length: in `.disc` every geometry
+  // calc is two levels deep and so went unmatched, while the alpha calc matched
+  // and became the third "length" — every layer computed an extent of 0 and the
+  // gate degraded into "alphas must not increase in source order", passing a
+  // fully inverted stack.
+  let rest = stripColour(layer)
+
+  // Balanced scan, not a regex. `calc(var(--cr-px) * (2 + 2 * var(--open)))`
+  // nests two deep and the old one-level pattern could not see it.
+  const calcs = balancedCalls(rest, 'calc')
   calcs.forEach((c, i) => {
     rest = rest.replace(c, ` @${i} `)
   })

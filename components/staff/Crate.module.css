@@ -154,7 +154,9 @@
      on a static box and the promotion has to survive the close. */
   position: relative;
   z-index: 1;
-  transition: z-index 0s var(--vitrine-dur-close, var(--salon-dur-ui, 240ms));
+  /* --vitrine-dur-close is declared on .salon-vitrine, which is a DESCENDANT
+     of .item, so it never resolves here. Naming the token that does. */
+  transition: z-index 0s var(--salon-dur-ui, 240ms);
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -164,7 +166,7 @@
         calc(var(--salon-stagger, 20ms) * var(--row-index, 0)),
       /* Repeated, not inherited: this shorthand would otherwise reset the
          z-index transition declared on .item above. */
-      z-index 0s var(--vitrine-dur-close, var(--salon-dur-ui, 240ms));
+      z-index 0s var(--salon-dur-ui, 240ms);
   }
 
   @starting-style {
@@ -201,8 +203,15 @@
   `[open]` is removed, but --vitrine-open only then begins interpolating 1 -> 0
   across --vitrine-dur-close, so the disc is still up to 140px out with 83.3px
   of free travel; dropping the card back into flow immediately lets the
-  neighbouring sleeve paint over roughly 57px of the leading edge. That fires on
-  every close and on every open -> open switch. `position` is unconditional on
+  neighbouring sleeve paint over roughly 57px of the leading edge.
+
+  This covers every close, and an open -> open switch onto any card EXCEPT the
+  immediate right-hand neighbour. In that one case both items hold z-index 2 for
+  the duration of the retraction — the closing one because of the delay below,
+  the opening one immediately — and an equal z-index is settled by tree order,
+  which the later sibling wins. Distinguishing "closing" from "open" is not
+  expressible in CSS without a state class, and this component gates no visible
+  state on script, so it stays a known transient. `position` is unconditional on
   .item above — z-index does nothing on a static box — and the drop is delayed
   by the close duration there, then zeroed here, where the disc needs cover from
   the first frame out.

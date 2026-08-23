@@ -35,15 +35,29 @@ export default function VitrineEscape({ group }: { group: string }) {
       ).filter((element) => element.getAttribute('name') === group)
       if (open.length === 0) return
 
-      // `:target` is URL state, and closing a <details> does not touch the URL.
-      // An object opened by its fragment — every spine anchor does this — would
-      // stay marked as the target after Escape shut it, so a closed row kept
-      // painting the "you are here" bar and the URL and the marked row said
-      // different things. Cleared only when the fragment points INSIDE something
-      // being closed here, so an unrelated fragment survives, and with
-      // replaceState so the history stack is unchanged.
+      // Drop a fragment that names something we are about to close, so that
+      // clicking the SAME spine again is a real fragment navigation rather than
+      // a re-navigation to the URL the page is already on.
+      //
+      // This does NOT clear `:target`, and must not be relied on to: per spec
+      // the document's target element is set by fragment navigation and history
+      // traversal, and pushState/replaceState do not touch it. The stale-mark
+      // problem this once claimed to fix is solved in Catalogue.module.css
+      // instead, by keying the mark to [open].
+      //
+      // decodeURIComponent throws URIError on a malformed escape — a hand-typed
+      // `#100%` is enough. Thrown here it would abort the handler before
+      // anything closed and leave Escape dead for as long as that hash survived,
+      // so a fragment we cannot read is simply a fragment we do not act on.
       const fragment = location.hash.slice(1)
-      const targeted = fragment ? document.getElementById(decodeURIComponent(fragment)) : null
+      let targeted: HTMLElement | null = null
+      if (fragment) {
+        try {
+          targeted = document.getElementById(decodeURIComponent(fragment))
+        } catch {
+          targeted = document.getElementById(fragment)
+        }
+      }
 
       const active = document.activeElement
       for (const details of open) {

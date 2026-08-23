@@ -197,10 +197,9 @@
 
 /* Ink wherever the row has gone to --salon-raised. --salon-subtle is 4.35:1 on
    the plate but only 2.79:1 on raised, under the 3:1 SC 1.4.11 asks of a state
-   indicator, and `:target` reaches raised without the pointer ever being
+   indicator, and the row reaches raised without the pointer ever being
    there. */
 .volume .face:hover::before,
-.volume .face:target::before,
 .volume[open] .face::before {
   border-color: var(--salon-ink);
 }
@@ -211,16 +210,28 @@
    stylesheet order. */
 
 /*
-  The row a spine anchor points at. Persists after the jump, which is the
-  point: the URL and the marked row say the same thing.
+  The row a spine anchor landed on.
 
-  It is also carrying real weight. Measured in Chrome 148: a fragment landing
+  Keyed to [open], NOT to :target, which is what this used to be. The target
+  element is document navigation state, not URL state: the HTML spec sets it
+  during a fragment navigation and history traversal, and NOTHING clears it when
+  a <details> closes. So the mark outlived the thing it marked — Escape, closing
+  by clicking the summary, and switching to another volume (which the `name`
+  group closes for you) all left the accent bar on a shut row, and switching
+  left it on the WRONG row. history.replaceState does not help: per spec it does
+  not update the target element at all.
+
+  [open] is the same signal without the rot. A spine anchor opens the volume
+  through the ancestor-details-revealing algorithm, so it is set exactly when a
+  reader has arrived, and it clears on every close gesture there is.
+
+  It carries real weight either way. Measured in Chrome 148: a fragment landing
   focuses the <summary> but does NOT match `:focus-visible`, so the shared ring
   never fires and the arrival would otherwise be silent. This is the only mark
   on the row a reader who came from a spine can see.
 */
-.volume .face:target {
-  background: var(--salon-raised);
+.volume[open] .face {
+  /* Background is already set by the [open] rule above, alongside :hover. */
   box-shadow: inset 2px 0 0 var(--salon-accent);
 }
 
