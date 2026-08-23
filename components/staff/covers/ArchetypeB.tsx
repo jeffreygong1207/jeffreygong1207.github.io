@@ -105,7 +105,19 @@ export function ArchetypeB({
         {inner}
       </div>
       {/* Rule-and-space foot. Deterministic from the index, so server and client
-          render byte-identical markup — Math.random() here would hydration-fail. */}
+          render byte-identical markup — Math.random() here would hydration-fail.
+
+          The gap is in cqw, not px, and that is load-bearing. Every bar is
+          `flex: N` = grow N / shrink 1 / basis 0%, so the bars contribute
+          nothing to the base size and the 33 gaps are the entire, unshrinkable
+          base. An absolute gap therefore does not scale with the jacket: at
+          1.5px the gaps total 49.5px against a strip that is only 0.21 x
+          --cr-jacket, i.e. 58.8px at the 280px ceiling and 37.8px at the 180px
+          floor, so every bar computes to a sub-pixel sliver above a 589px
+          viewport and to exactly 0px below it — the foot disappears on every
+          phone. design/label.mjs got away with 1.5px only because its sleeve
+          was a fixed 330px; 1.5/330 = 0.4545cqw is the same ratio expressed in
+          the same units as the rest of this file, and holds it at every size. */}
       <div
         aria-hidden="true"
         style={{
@@ -115,7 +127,7 @@ export function ArchetypeB({
           top: '88.75%',
           height: '6.3%',
           display: 'flex',
-          gap: '1.5px',
+          gap: '0.4545cqw',
           alignItems: 'stretch',
         }}
       >

@@ -34,7 +34,7 @@ export default function StaffSidebar({ email }: { email: string }) {
           The Cabinet
         </p>
         <p
-          className="mt-1 text-[10px] uppercase tracking-[0.18em] text-salon-subtle"
+          className="mt-1 text-[10px] uppercase tracking-[0.18em] text-salon-muted"
           style={{ fontFamily: 'var(--salon-font-mono)' }}
         >
           jeffreygong.dev
@@ -76,8 +76,12 @@ export default function StaffSidebar({ email }: { email: string }) {
         >
           View site &rarr;
         </Link>
+        {/* --salon-muted, not --salon-subtle: #71857A on the #1F2D23 plate is
+            3.66:1, under the 4.5:1 floor, and neither the signed-in account nor
+            the only sign-out control in the product is incidental text. #93A69B
+            takes both to 5.60:1. */}
         <p
-          className="max-w-full truncate px-3 pt-1 text-[11px] text-salon-subtle"
+          className="max-w-full truncate px-3 pt-1 text-[11px] text-salon-muted"
           title={email}
           style={{ fontFamily: 'var(--salon-font-mono)' }}
         >
@@ -85,7 +89,7 @@ export default function StaffSidebar({ email }: { email: string }) {
         </p>
         {/* POST only, deliberately: a GET sign-out is CSRF-able by any <img>. */}
         <form action="/auth/signout" method="post">
-          <button className="px-3 pt-1 text-[11px] text-salon-subtle transition-colors hover:text-salon-ink">
+          <button className="px-3 pt-1 text-[11px] text-salon-muted transition-colors hover:text-salon-ink">
             Sign out
           </button>
         </form>

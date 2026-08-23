@@ -44,7 +44,21 @@ export const COVERS: Catalogue<CoverSpec> = [
   { archetype: 'D', dark: true, year: 2025, plot: 'trail' },
   { archetype: 'F', dark: true, year: 2025 },
   // AC-006 Secure File Sharing System — the empty set.
-  { archetype: 'A', dark: true, year: 2025, glyph: '∅' },
+  //
+  // U+00D8 Ø, NOT U+2205 ∅. The same mark either way — Bourbaki took the empty-set
+  // sign from the Norwegian letter — but only one of them renders. next/font
+  // ships exactly three Archivo faces (vietnamese, latin-ext, latin) and U+2205
+  // is outside all three unicode-ranges, so the browser skips Archivo for that
+  // codepoint no matter what the woff2 holds. No `subsets:` option in
+  // app/(staff)/admin/layout.tsx fixes it either: Google cuts each file to its
+  // declared range and Archivo publishes no subset carrying U+2205. The next
+  // stack entry is `Archivo Fallback` = local(Arial), which lacks it too, so the
+  // mark fell through to a symbol face at a single weight and was synthetically
+  // bolded — a different family, weight and width from AC-002, which is this
+  // same archetype at this same 34cqw. Archetype A is one glyph over ~62% empty
+  // sleeve, so that glyph IS the cover. U+00D8 is inside the latin face's
+  // U+0000-00FF range and in its cmap, so it draws as real Archivo ExtraBold.
+  { archetype: 'A', dark: true, year: 2025, glyph: 'Ø' },
   // AC-007 BerkeleyTime — the enrolment grid is the artwork.
   { archetype: 'D', dark: true, year: 2025, plot: 'grid' },
   { archetype: 'E', dark: false, year: 2024 },

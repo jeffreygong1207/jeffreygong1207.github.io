@@ -7,7 +7,9 @@ import type { ArtProps } from './types'
  * emptiness is the design; filling it is how this archetype dies.
  *
  * AC-002 Restauranty ('86', the kitchen call for a dish that is gone) and
- * AC-006 Secure File Sharing ('∅').
+ * AC-006 Secure File Sharing ('Ø' — U+00D8, not the empty-set sign U+2205 it
+ * reads as. Same mark, and Bourbaki took the symbol from the Norwegian letter,
+ * but only U+00D8 is inside the subset next/font ships. See covers/index.tsx).
  */
 export function ArchetypeA({ ink, year, glyph }: ArtProps & { glyph: string }) {
   return (

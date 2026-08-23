@@ -60,14 +60,15 @@
   gap: 0.625rem;
 }
 
-/* A miniature of the real headband, so the legend shows the thing it names
-   rather than describing it. */
+/* A miniature of the GILT headband — the legend sentence names the gilt one, so
+   the swatch has to be that one and not the blind-stamped stripe the other 26
+   carry. Same gradient as `.spine:has(.guideLink) .headband` below. */
 .legendSwatch {
   flex: none;
   width: 30px;
   height: 3px;
   margin-top: 0.55em;
-  background: repeating-linear-gradient(90deg, #c8bba0 0 1.5px, #6e5f49 1.5px 3px);
+  background: repeating-linear-gradient(90deg, #f2dc9e 0 1.5px, #6b5324 1.5px 3px);
   opacity: 0.85;
 }
 
@@ -316,7 +317,10 @@
 }
 
 /* Rule 15: the headband at the head of the spine. Real books have it, renders
-   do not. `opacity` is safe here — leaf element, nothing 3D below it. */
+   do not. `opacity` is safe here — leaf element, nothing 3D below it.
+
+   This is the base, blind-stamped state: silk over a dark core, the 26 volumes
+   with no mastery guide. */
 .headband {
   position: absolute;
   top: 0;
@@ -325,6 +329,21 @@
   height: 3px;
   background: repeating-linear-gradient(90deg, #c8bba0 0 1.5px, #6e5f49 1.5px 3px);
   opacity: 0.85;
+}
+
+/*
+  §2.2: the 13 volumes with a mastery guide "get a gold head-band and the spine
+  links to the Drive file. The other 26 do not." shelf.mjs emits one uniform
+  headband; the spec overrides it, and the legend on the page asserts the
+  distinction in words, so the CSS has to draw it.
+
+  Selected off `.guideLink`, which Bookcase.tsx renders only when guideId is
+  non-null — the same single source of truth that decides the gilt foil, so the
+  headband can never disagree with the title it sits above. The two stops are
+  the gilt foil's own highlight and shadow (#F2DC9E / #6B5324); no new colour.
+*/
+.spine:has(.guideLink) .headband {
+  background: repeating-linear-gradient(90deg, #f2dc9e 0 1.5px, #6b5324 1.5px 3px);
 }
 
 /* ---------------------------------------------------------------------------

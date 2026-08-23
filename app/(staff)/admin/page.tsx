@@ -82,8 +82,12 @@ export default async function Cabinet() {
       </header>
 
       <section className="mb-12">
+        {/* Section labels are real content at 11px, so spec 3 requires 4.5:1.
+            --salon-subtle is 3.43:1 on --salon-ground and fails; --salon-muted
+            measures 5.25:1 there. Same call Crate.module.css and the slate ink
+            scale already make. */}
         <h2
-          className="mb-4 text-[11px] uppercase tracking-[0.24em] text-salon-subtle"
+          className="mb-4 text-[11px] uppercase tracking-[0.24em] text-salon-muted"
           style={MONO}
         >
           Entrances
@@ -133,7 +137,7 @@ export default async function Cabinet() {
 
       <section>
         <h2
-          className="mb-4 text-[11px] uppercase tracking-[0.24em] text-salon-subtle"
+          className="mb-4 text-[11px] uppercase tracking-[0.24em] text-salon-muted"
           style={MONO}
         >
           On the desk

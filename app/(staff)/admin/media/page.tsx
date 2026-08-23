@@ -96,6 +96,15 @@ export default async function MediaPage() {
                 rel="noopener noreferrer"
                 className="block focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-salon-accent"
               >
+                {/* The image is the anchor's only visible content, so without
+                    this the link computes an empty accessible name (WCAG F89).
+                    Name it as text rather than aria-label, matching Bookcase,
+                    and say it leaves the tab — the img stays alt="" so the name
+                    is not announced twice. */}
+                <span className="sr-only">
+                  {asset.name} &mdash; {asset.postTitle ?? 'orphaned upload'}. Full-size image,
+                  opens in a new tab.
+                </span>
                 <div className="aspect-[4/3] bg-salon-sunken">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img

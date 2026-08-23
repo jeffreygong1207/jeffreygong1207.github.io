@@ -5,8 +5,25 @@ import { EXPERIENCE_ROLES } from '@/lib/experience'
 // no such object — so this page deliberately does not open a Supabase client.
 // The data lives in lib/experience.ts, which mirrors components/Experience.tsx.
 
+// Same rule as app/(staff)/admin/page.tsx: every figure in the prose is derived
+// from EXPERIENCE_ROLES rather than transcribed into the copy. lib/experience.ts
+// is hand-maintained against components/Experience.tsx and has already changed
+// length once, so a spelled-out count would go stale the next time a role lands.
+function plural(n: number, word: string) {
+  return `${n} ${word}${n === 1 ? '' : 's'}`
+}
+
 export default function ExperiencePage() {
   const described = EXPERIENCE_ROLES.filter((role) => role.description).length
+  const undescribed = EXPERIENCE_ROLES.length - described
+  // The second half of the gap note is a claim about `described`, and the list
+  // below schedules the copy that falsifies it — so it is read off the data too.
+  const gap =
+    undescribed === 0
+      ? `All ${plural(EXPERIENCE_ROLES.length, 'role')} are written up.`
+      : undescribed === EXPERIENCE_ROLES.length
+        ? `${plural(undescribed, 'role')}, nothing written about any of them.`
+        : `${plural(undescribed, 'role')} of ${EXPERIENCE_ROLES.length} with nothing written about them.`
 
   return (
     <>
@@ -19,8 +36,9 @@ export default function ExperiencePage() {
             Experience
           </h1>
           <p className="mt-1 text-sm text-salon-muted">
-            Six roles, on the slate. The shell is CSS 3D; the screen is ordinary
-            HTML you can select, search and tab through.
+            {plural(EXPERIENCE_ROLES.length, 'role')}, on the slate. The shell
+            is CSS 3D; the screen is ordinary HTML you can select, search and tab
+            through.
           </p>
         </div>
 
@@ -87,9 +105,9 @@ export default function ExperiencePage() {
               <span style={{ fontFamily: 'var(--salon-font-mono)' }}>
                 components/Experience.tsx
               </span>{' '}
-              stores organisation, position and date and nothing else. Six roles,
-              nothing written about any of them. The slate marks each absence
-              rather than hiding it behind a one-line list.
+              stores organisation, position and date and nothing else. {gap} The
+              slate marks any absence rather than hiding it behind a one-line
+              list.
             </p>
           </section>
 

@@ -29,6 +29,11 @@ const STATUS_DOT: Record<PostStatus, string> = {
 // hover background on the same element.
 const PLATE_RING = { boxShadow: 'inset 0 0 0 1px rgba(221, 238, 255, 0.14)' }
 
+// This page is a server component, so the date is formatted once on the server —
+// where the zone is UTC on Vercel, not the author's. Without an explicit zone,
+// anything saved after 5pm local renders a day ahead of the author's own clock.
+const AUTHOR_TZ = 'America/Los_Angeles'
+
 const DISPLAY = { fontFamily: 'var(--salon-font-display)' }
 const MONO = { fontFamily: 'var(--salon-font-mono)' }
 
@@ -133,6 +138,7 @@ export default async function PostsIndex({
                   {new Date(post.updated_at).toLocaleDateString('en-US', {
                     month: 'short',
                     day: 'numeric',
+                    timeZone: AUTHOR_TZ,
                   })}
                 </p>
               </div>
