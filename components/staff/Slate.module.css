@@ -90,7 +90,7 @@
      mode needs ~5x light-mode opacity" predicts the 0.42 exactly. */
   box-shadow:
     0 4px 40px 8px rgba(9, 18, 11, 0.42),
-    0 24px 40px -22px rgba(0, 0, 0, 0.8),
+    17px 24px 40px -22px rgba(0, 0, 0, 0.8),
     0 0 0 0.5px rgba(0, 0, 0, 0.8);
 }
 
@@ -117,15 +117,24 @@
 
   /* Unbranded body. Warm graphite so it reads as an object in this room rather
      than as a specific product someone else designed. */
-  background: linear-gradient(150deg, #3a3129 0%, #221b15 60%, #171210 100%);
+  background: linear-gradient(145deg, #423931 0%, #332b24 55%, #2a231d 100%);
 
   /* Measured off a real app window on a dark ground. The top edge light is
      SUB-PIXEL and TOP-ONLY: that asymmetry is what makes it read as a lit edge
      rather than as a border. Four equal insets read as a border. */
+  /* The rim is an ARC, not a ring. `inset 0 0.5px 0` has no x-component, so it
+     lit the upper-left and upper-right identically — an overhead key, in a room
+     lit from 235deg. An inset with positive x and y and no blur paints the left
+     and top only, which is the key-facing arc, at the key's own 0.70:1.00
+     bearing. The uniform rgba(221,238,255,.14) ring it replaces was the single
+     declaration most responsible for this reading as a rounded rectangle.
+
+     The second inset is ground bounce, in the plate's own hue. The body's dark
+     end is within 8.6% of the plate's luminance, so on the shadow side the only
+     separator was a BLACK hairline over near-black — no silhouette at all. */
   box-shadow:
-    inset 0 0.5px 0 rgba(255, 255, 255, 0.3),
-    /* §1.3, and vercel ships rgba(255,255,255,0.145) — same value. */
-      inset 0 0 0 1px rgba(221, 238, 255, 0.14),
+    inset 0.7px 1px 0 rgba(255, 255, 255, 0.34),
+    inset -0.7px -1px 0 rgba(150, 178, 158, 0.07),
     0 0 0 0.5px rgba(0, 0, 0, 0.8);
 }
 
@@ -134,9 +143,10 @@
    Full-face was a contrast bug, not a highlight. Over the sheet the sweep is
    worth ~2/255 — invisible — while it lifts BOTH ink and paper and so collapses
    the ratio: --ink-2 #5E5852 on #EFEAE7 goes 5.88:1 -> 4.33:1 at the 0.13 peak,
-   and where the 104° sweep crosses the 168° haze the composite reaches
+   and where the 104° sweep crosses the 145° haze the composite reaches
    1-(1-.13)(1-.055) = 0.178 and the .mark monogram on its #E7E1DA chip bottoms
-   out near 3.9:1. Halving the stops does not buy the fix either: 0.08 over 0.03
+   out near 3.62:1 (recomputed; the 3.9 first written here was optimistic).
+   Halving the stops does not buy the fix either: 0.08 over 0.03
    still composites to 0.108 in the overlap and the chip lands at 4.29:1, since
    the chip's own crossing point is ~0.081. Stopping at the aperture returns the
    full designed 5.88:1 / 5.40:1 and keeps them independent of gradient
@@ -162,7 +172,7 @@
       transparent 57%
     ),
     linear-gradient(
-      168deg,
+      145deg,
       rgba(255, 255, 255, 0.055) 0%,
       rgba(255, 255, 255, 0.02) 22%,
       transparent 46%
@@ -184,8 +194,40 @@
   background: var(--salon-sheet, #efeae7);
   /* The bezel's own shadow falling on the glass, plus the seam. */
   box-shadow:
-    inset 0 1px 2px rgba(0, 0, 0, 0.3),
+    inset 1.4px 2px 3px rgba(0, 0, 0, 0.3),
+    inset 0 0 24px -12px rgba(44, 41, 38, 0.22),
     inset 0 0 0 1px rgba(0, 0, 0, 0.34);
+}
+
+/*
+  The cover glass continued across the aperture.
+
+  .device::after stops the reflection dead at the screen edge, which announces
+  that the highlight is frame decoration rather than a pane. Real cover glass is
+  one continuous sheet: the reflection crosses the bezel boundary and merely
+  WEAKENS over the emissive area.
+
+  Capped at 0.055 because this one does composite over screen text. Measured at
+  the worst pair on the page — --ink-2 #5E5852 on the .mark chip #E7E1DA, which
+  is 5.405:1 clean: at 0.055 it holds 4.78:1, and the ceiling before it breaches
+  4.5:1 is 0.06. The stops are the frame sweep's own, shifted for the bezel's
+  27.2px projection onto the 145deg axis; the register error is about 7px on a
+  121px soft-edged band, which is invisible.
+*/
+.screen::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  border-radius: inherit;
+  background: linear-gradient(
+    145deg,
+    transparent 38%,
+    rgba(255, 255, 255, 0.055) 45%,
+    rgba(255, 255, 255, 0.022) 50%,
+    transparent 57%
+  );
 }
 
 /* Apple's corners are continuous, k=2. Progressive enhancement: browsers

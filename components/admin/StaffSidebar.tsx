@@ -113,7 +113,11 @@ export default function StaffSidebar({ email }: { email: string }) {
         {/* POST only, deliberately: a GET sign-out is CSRF-able by any <img>. */}
         <form action="/auth/signout" method="post" className="md:mt-1">
           <button
-            className={`${ROW} py-1.5 text-[11px] text-salon-muted transition-colors ${EASE} hover:text-salon-ink ${FOCUS}`}
+            /* 13px, not 11px. The comment above argues this is not incidental
+               text and then fixes only its colour; 11px is fine-print size for
+               the only sign-out control in the product. ROW is padding alone,
+               so nothing here is width-constrained. */
+            className={`${ROW} py-1.5 text-[13px] text-salon-muted transition-colors ${EASE} hover:text-salon-ink ${FOCUS}`}
           >
             Sign out
           </button>
