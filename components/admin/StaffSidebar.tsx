@@ -15,6 +15,26 @@ const NAV = [
   { href: '/admin/experience', label: 'Experience', exact: false },
 ]
 
+// One ring: 2px solid --salon-accent, offset 2px. Nothing here declares its
+// own — this column had no focus style at all, which on a dark plate meant the
+// UA default and effectively no visible focus for eight controls.
+//
+// On the editor page the shell goes light around this column while the column
+// keeps its plate. globals.css resolves that by ground rather than by page:
+// `.salon-plate` inside a light shell keeps the dark-ground ring (7.78:1 on
+// #141E17), so the `salon-plate` class on the <aside> below is load bearing
+// for focus, not only for the background.
+const FOCUS = 'salon-focus'
+
+// One gutter for the whole column. The container inset plus the control's own
+// padding has to add up to the 20px the wordmark sits at, or the panel reads
+// as two left edges in 224px.
+const ROW = 'px-3'
+const GUTTER = 'px-2'
+
+// W3 owns the curve and the duration; nothing here writes its own.
+const EASE = 'duration-[var(--salon-dur-ui)] ease-[var(--salon-ease)]'
+
 export default function StaffSidebar({ email }: { email: string }) {
   const pathname = usePathname()
 
@@ -41,7 +61,9 @@ export default function StaffSidebar({ email }: { email: string }) {
         </p>
       </div>
 
-      <nav className="flex flex-wrap gap-1 px-3 pb-3 md:flex-1 md:flex-nowrap md:flex-col md:pb-0">
+      <nav
+        className={`flex flex-wrap gap-1 ${GUTTER} pb-3 md:flex-1 md:flex-nowrap md:flex-col md:pb-0`}
+      >
         {NAV.map((item) => {
           const active = item.exact
             ? pathname === item.href
@@ -51,7 +73,7 @@ export default function StaffSidebar({ email }: { email: string }) {
               key={item.href}
               href={item.href}
               aria-current={active ? 'page' : undefined}
-              className={`block px-3 py-2 text-sm transition-colors ${
+              className={`block ${ROW} py-2 text-sm transition-colors ${EASE} ${FOCUS} ${
                 active
                   ? 'font-medium text-salon-accent'
                   : 'text-salon-muted hover:text-salon-ink'
@@ -68,28 +90,31 @@ export default function StaffSidebar({ email }: { email: string }) {
         })}
       </nav>
 
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 px-3 pb-4 pt-3 md:block md:pb-5">
+      <div
+        className={`flex flex-wrap items-center gap-x-4 gap-y-1 ${GUTTER} pb-4 pt-3 md:block md:pb-5`}
+      >
         <hr className="salon-hairline mb-3 hidden w-full md:block" />
         <Link
           href="/blog"
-          className="block px-3 py-1.5 text-sm text-salon-muted transition-colors hover:text-salon-ink"
+          className={`block ${ROW} py-1.5 text-sm text-salon-muted transition-colors ${EASE} hover:text-salon-ink ${FOCUS}`}
         >
           View site &rarr;
         </Link>
-        {/* --salon-muted, not --salon-subtle: #71857A on the #1F2D23 plate is
-            3.66:1, under the 4.5:1 floor, and neither the signed-in account nor
-            the only sign-out control in the product is incidental text. #93A69B
-            takes both to 5.60:1. */}
+        {/* --salon-muted, not --salon-subtle: #71857A on the plate is under the
+            4.5:1 floor, and neither the signed-in account nor the only
+            sign-out control in the product is incidental text. */}
         <p
-          className="max-w-full truncate px-3 pt-1 text-[11px] text-salon-muted"
+          className={`max-w-full truncate ${ROW} pt-1 text-[11px] text-salon-muted md:pt-4`}
           title={email}
           style={{ fontFamily: 'var(--salon-font-mono)' }}
         >
           {email}
         </p>
         {/* POST only, deliberately: a GET sign-out is CSRF-able by any <img>. */}
-        <form action="/auth/signout" method="post">
-          <button className="px-3 pt-1 text-[11px] text-salon-muted transition-colors hover:text-salon-ink">
+        <form action="/auth/signout" method="post" className="md:mt-1">
+          <button
+            className={`${ROW} py-1.5 text-[11px] text-salon-muted transition-colors ${EASE} hover:text-salon-ink ${FOCUS}`}
+          >
             Sign out
           </button>
         </form>

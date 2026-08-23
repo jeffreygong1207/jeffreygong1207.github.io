@@ -20,11 +20,18 @@ export default async function EditPostPage({
       {/* PostEditor renders `.salon-sheet`, and globals.css watches for it with
           `:has()` — arriving here cross-fades the whole ground from #233226 to
           #EFEAE7 over 500ms. This link therefore sits on paper, not on the
-          room, so it takes sheet ink rather than `--salon-ink`. */}
+          room, so it takes sheet ink rather than `--salon-ink`.
+
+          The ring is `.salon-focus` like every other focusable thing in the
+          staff area. It was the last hand-rolled one left, and it did not need
+          to be: globals.css already swaps the ring to --salon-accent-sheet
+          under `.salon-shell:has(.salon-sheet)`, which is exactly this page,
+          and this link is exactly what that arm is for — on the paper without
+          being inside `.salon-sheet`. */}
       <div className="mb-6">
         <Link
           href="/admin/posts"
-          className="text-[11px] uppercase tracking-[0.2em] text-[color:var(--salon-sheet-ink)] opacity-70 transition-opacity hover:opacity-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--salon-accent-d)]"
+          className="salon-focus text-[11px] uppercase tracking-[0.2em] text-[color:var(--salon-sheet-ink)] opacity-70 transition-opacity hover:opacity-100"
           style={{ fontFamily: 'var(--salon-font-mono)' }}
         >
           &larr; Posts

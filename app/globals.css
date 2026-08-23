@@ -17,20 +17,94 @@
    every object at #232323, too dark to show colour.
    --------------------------------------------------------------------------- */
 
+/* SURFACE LADDER — monotonic in luminance, every adjacent step above 1 JND.
+   Measured with the sRGB relative-luminance formula and CIE L*; the L* column
+   is the one that matters at this end of the range, because the WCAG ratio's
+   +0.05 flare term compresses everything near black.
+
+     token          hex       Y         L*      step to next
+     --salon-sunken #0B120E   0.005355   4.84   ΔL* 5.26  (1.109:1)
+     --salon-plate  #141E17   0.011391  10.10   ΔL* 9.03  (1.267:1)
+     --salon-ground #233226   0.027785  19.13   ΔL* 6.33  (1.230:1)
+     --salon-raised #314034   0.045677  25.47   ΔL* 8.97  (1.382:1)
+     --salon-line   #44554A   0.082204  34.44
+
+   Before this amendment the plate was #1F2D23: 1.067:1 and ΔL* 2.18 against
+   the ground — below the ~3 L* a large flat field needs to read as a separate
+   surface at all, which is why every card looked like an unfilled outline. The
+   plate stays DARKER than the page (spec 1.2/1.3). Two findings close on this
+   one token: hover (--salon-raised over a plate) goes 1.313:1 -> 1.558:1
+   without --salon-raised moving.
+
+   --salon-sunken had to follow the plate down or it would have ended up
+   LIGHTER than the surface it is recessed into (it is a well inside a plate on
+   /admin/media). --salon-line rose one step so a divider still reads on a
+   hovered row: line-on-raised was 1.259:1, now 1.382:1.
+
+   Text is unaffected or better everywhere: --salon-muted is 6.65:1 on the new
+   plate (was 5.9:1) and --salon-sunken as ink on the accent button is 8.63:1
+   (was 6.97:1). */
 :root {
   --salon-ground: #233226;
-  --salon-sunken: #1B2820;
-  --salon-plate: #1F2D23;
+  --salon-sunken: #0B120E;
+  --salon-plate: #141E17;
   --salon-raised: #314034;
-  --salon-line: #3F4F42;
+  --salon-line: #44554A;
   --salon-ink: #EDF4EE;
   --salon-muted: #93A69B;
   --salon-subtle: #71857A;
   --salon-accent: #DEA279;
   --salon-accent-d: #A05A28;
+  /* The accent on paper. --salon-accent is 1.84:1 on #EFEAE7 and
+     --salon-accent-d is 4.41:1 — the latter is fine as a 2px rule, neither is
+     fine as 13-18px text. This is the same hue two lightness points down from
+     accent-d: 4.74:1 on the sheet, either as ink or as the ground. Every light
+     surface takes this one rather than mixing a fresh orange. */
+  --salon-accent-sheet: #995626;
   --salon-sheet: #EFEAE7;
   --salon-sheet-ink: #2C2926;
   --salon-gilt: #D9B45F;
+
+  /* The composited edge of a plate. Tokenised at the value already shipped
+     inline in several staff pages so adopting the token changes nothing; over
+     the new plate it computes #303B37, ΔL* 13.68. The 0.30 sibling is the
+     hover ring. Prefer these to a fresh rgba() literal. */
+  --salon-edge: rgba(221, 238, 255, 0.14);
+  --salon-edge-strong: rgba(221, 238, 255, 0.30);
+
+  /* MOTION. One curve for the whole staff area. Ease-out: instant start, long
+     settle. Travel is budgeted, not chosen per component — 4px for a control
+     and nothing may exceed 24px. */
+  --salon-ease: cubic-bezier(0.25, 1, 0.5, 1);
+  --salon-dur-ui: 240ms;
+  --salon-dur-reveal: 300ms;
+  --salon-dur-slow: 420ms;
+  --salon-stagger: 20ms;
+  --salon-lift: 4px;
+
+  /* TYPE. Size, leading and tracking travel together as a row. A component
+     picks a row; it does not invent a pairing. Tracking is negative at reading
+     sizes and positive only where the row is set in caps, which is the one
+     case that needs it. */
+  --salon-t-display-size: clamp(1.625rem, 1.35rem + 0.85vw, 1.875rem);
+  --salon-t-display-lh: 1.06;
+  --salon-t-display-track: 0.2em;
+
+  --salon-t-title-size: 1.25rem;
+  --salon-t-title-lh: 1.2;
+  --salon-t-title-track: -0.01em;
+
+  --salon-t-body-size: 0.9375rem;
+  --salon-t-body-lh: 1.4;
+  --salon-t-body-track: 0;
+
+  --salon-t-meta-size: 0.8125rem;
+  --salon-t-meta-lh: 1.4;
+  --salon-t-meta-track: 0;
+
+  --salon-t-label-size: 10px;
+  --salon-t-label-lh: 1.2;
+  --salon-t-label-track: 0.13em;
 }
 
 /* Same values again as literals so `bg-salon-ground`, `text-salon-ink`, etc.
@@ -39,10 +113,10 @@
    chooses to emit theme variables. */
 @theme {
   --color-salon-ground: #233226;
-  --color-salon-sunken: #1B2820;
-  --color-salon-plate: #1F2D23;
+  --color-salon-sunken: #0B120E;
+  --color-salon-plate: #141E17;
   --color-salon-raised: #314034;
-  --color-salon-line: #3F4F42;
+  --color-salon-line: #44554A;
   --color-salon-ink: #EDF4EE;
   --color-salon-muted: #93A69B;
   --color-salon-subtle: #71857A;
@@ -235,7 +309,7 @@ body:has(.salon-shell .salon-sheet) {
    shadow is invisible on #233226, so the edge is an inset hairline instead. */
 .salon-plate {
   background: var(--salon-plate);
-  box-shadow: inset 0 0 0 1px rgba(221, 238, 255, 0.14);
+  box-shadow: inset 0 0 0 1px var(--salon-edge);
 }
 
 .salon-hairline {
@@ -262,6 +336,19 @@ body:has(.salon-shell .salon-sheet) {
    animated. Shared block — features gate JS motion with
    components/staff/useReducedMotion.ts and add no second media query. */
 @media (prefers-reduced-motion: reduce) {
+  /* Structural half of the contract: the durations are zero at the source, so
+     anything built on the tokens is still stopped even where the sweep below
+     cannot reach — an inline style, a shadow root, a transition on an element
+     outside `.salon-shell`. Only `--salon-*` names are touched, so this is
+     inert on every public route. */
+  :root {
+    --salon-dur-ui: 0ms;
+    --salon-dur-reveal: 0ms;
+    --salon-dur-slow: 0ms;
+    --salon-stagger: 0ms;
+    --salon-lift: 0px;
+  }
+
   .salon-shell,
   .salon-shell *,
   .salon-shell *::before,
@@ -275,3 +362,118 @@ body:has(.salon-shell .salon-sheet) {
     scroll-behavior: auto !important;
   }
 }
+
+
+/* ===========================================================================
+   SALON — shared type, focus and entrance primitives.
+
+   Amendment to the frozen block above. Additive: every selector is `.salon*`
+   or `:root`, so no public route changes. Feature CSS still lives in
+   co-located modules; what is here is only the handful of treatments that were
+   being reinvented per page.
+
+   THE MOTION INVARIANT, which every staff feature must honour:
+
+     No element may start at opacity 0 unless its final state is also declared
+     unconditionally.
+
+   Concretely: the visible state is the plain, unconditional declaration; the
+   hidden state exists only inside `@media (prefers-reduced-motion:
+   no-preference)`, and only as a `@starting-style` or behind an attribute that
+   JavaScript sets. Every failure — stylesheet dropped, JavaScript dead,
+   reduced motion on, browser without `@starting-style` — then resolves to
+   "content visible, no animation" rather than a blank page. Nothing in the
+   staff area uses a mechanism that fails the other way.
+   =========================================================================== */
+
+/* One h1 treatment. Six staff pages were shipping five: two type families,
+   three trackings on one face and four size rules for a single role. Cinzel in
+   caps is the one the index and the post list already used, and caps is the
+   case that justifies the positive tracking. Consumers set nothing but colour
+   if they need to override it. */
+.salon-h1 {
+  margin: 0;
+  font-family: var(--salon-font-display);
+  font-size: var(--salon-t-display-size);
+  font-weight: 600;
+  line-height: var(--salon-t-display-lh);
+  letter-spacing: var(--salon-t-display-track);
+  text-transform: uppercase;
+  color: var(--salon-ink);
+}
+
+.salon-h2 {
+  margin: 0;
+  font-family: var(--salon-font-display);
+  font-size: var(--salon-t-title-size);
+  font-weight: 600;
+  line-height: var(--salon-t-title-lh);
+  letter-spacing: var(--salon-t-title-track);
+  color: var(--salon-ink);
+}
+
+.salon-body {
+  font-family: var(--salon-font-ui);
+  font-size: var(--salon-t-body-size);
+  line-height: var(--salon-t-body-lh);
+  letter-spacing: var(--salon-t-body-track);
+}
+
+.salon-meta {
+  font-family: var(--salon-font-ui);
+  font-size: var(--salon-t-meta-size);
+  line-height: var(--salon-t-meta-lh);
+  letter-spacing: var(--salon-t-meta-track);
+  color: var(--salon-muted);
+}
+
+/* The mono label. Already the de-facto standard at 10px/0.13em; this is it
+   written down once. */
+.salon-label {
+  font-family: var(--salon-font-mono);
+  font-size: var(--salon-t-label-size);
+  line-height: var(--salon-t-label-lh);
+  letter-spacing: var(--salon-t-label-track);
+  text-transform: uppercase;
+  color: var(--salon-muted);
+}
+
+/* One focus ring. Five offsets and two colours were in use, including a
+   negative inset. The colour still switches on the light reading sheet because
+   --salon-accent is 1.84:1 there — that pair is deliberate (spec 1.1), unlike
+   the offsets. */
+.salon-focus:focus-visible {
+  outline: 2px solid var(--salon-accent);
+  outline-offset: 2px;
+}
+/* The ring follows the GROUND it lands on, which on the editor page is two
+   grounds at once: `:has()` takes the shell light, but the sidebar and the
+   skip link keep their dark plate inside it.
+
+   Arm one is the paper — including the back link above the editor, which sits
+   on the light ground without being inside `.salon-sheet`. Arm two hands the
+   plates their ring back, and is the reason arm one can stay: dropping the
+   `:has()` half outright, which is the obvious reading of "it reaches too far",
+   would leave that back link at 1.84:1.
+
+   Measured on #EFEAE7: accent 1.84:1, accent-sheet 4.74:1.
+   Measured on #141E17: accent 7.78:1, accent-sheet 3.02:1.
+   Two classes deep beats one, and both rules are unlayered, so the exception
+   wins without any !important or any class on the element. */
+.salon-sheet .salon-focus:focus-visible,
+.salon-shell:has(.salon-sheet) .salon-focus:focus-visible {
+  outline-color: var(--salon-accent-sheet);
+}
+.salon-shell:has(.salon-sheet) .salon-plate.salon-focus:focus-visible,
+.salon-shell:has(.salon-sheet) .salon-plate .salon-focus:focus-visible {
+  outline-color: var(--salon-accent);
+}
+
+/* A shared `.salon-enter` entrance lived here and had no callers: every surface
+   that needed one — Slate, Crate — declares its own `@starting-style` beside
+   the geometry it animates, because the delay ladder has to key off that
+   component's own rows. Removed rather than left dressed as an API, since this
+   file ships on every public page too. The pattern, if a third surface wants
+   it: declare the final state unconditionally, put the transition and the
+   `@starting-style` inside `prefers-reduced-motion: no-preference`, and never
+   let opacity 0 be the declared state. */

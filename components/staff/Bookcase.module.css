@@ -19,22 +19,48 @@
 
 /* ---------------------------------------------------------------------------
    Page furniture
+
+   SPACING. This file and Crate.module.css share one scale — 8px base with 4px
+   substeps at the small end: 4 8 12 16 24 32 40 48 56 64 80 — and one radius,
+   2px, on every corner either file draws.
+
+   The case's own geometry is NOT on that scale and must not be moved onto it.
+   The 18px case padding, 26px shelf gap, 20px/14px case edges, 2px book gap,
+   11px board and 11px seam are transcribed constants from design/shelf.mjs
+   (§2.2) and are load-bearing.
+
+   MOTION. Every duration and curve in this file resolves from the shared Salon
+   motion tokens, aliased once on .viewport below. The literal in each var()
+   fallback is the same value the token carries, not a second opinion: a build
+   that drops the custom properties (which has happened on this project) then
+   still animates correctly instead of falling back to `all 0s ease`.
    --------------------------------------------------------------------------- */
 
+/*
+  The h1 lands on the same vertical line as every other staff page.
+
+  Coursework is the one page that opts out of the measure with `.salon-wide`,
+  and `.salon-column:has(.salon-wide)` zeroes the column's inline padding and
+  drops its 64rem cap. So this header reproduces the inset those two would
+  otherwise have produced:
+
+      max(pad, (columnWidth - 64rem) / 2 + pad)
+
+  Below the cap the column is flush and the inset is just the padding; above it
+  the centring slack is half the overflow. Identical to `.salon-column` at every
+  width, which is what stops the title sliding sideways on the way in and out of
+  this page. `max-width` on this element would fight the same padding, so the
+  measure lives on the two paragraphs instead.
+*/
 .header {
-  padding-inline: clamp(1.5rem, 5vw, 4rem);
-  padding-bottom: 2rem;
-  max-width: 60rem;
+  padding-inline: max(1.5rem, calc((100% - 64rem) / 2 + 1.5rem));
+  padding-bottom: 32px;
 }
 
-.title {
-  font-family: var(--salon-font-display);
-  font-size: 1.75rem;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--salon-ink);
-  margin: 0;
+@media (min-width: 768px) {
+  .header {
+    padding-inline: max(2.5rem, calc((100% - 64rem) / 2 + 2.5rem));
+  }
 }
 
 /* --salon-ink, not --salon-muted: this is body copy and muted is 4.4:1, which
@@ -44,7 +70,7 @@
   font-size: 1.0625rem;
   line-height: 1.6;
   color: var(--salon-ink);
-  margin: 0.75rem 0 0;
+  margin: 12px 0 0;
   max-width: 46rem;
 }
 
@@ -53,11 +79,11 @@
   font-size: 0.8125rem;
   line-height: 1.65;
   color: var(--salon-muted);
-  margin: 1.25rem 0 0;
+  margin: 24px 0 0;
   max-width: 46rem;
   display: flex;
   align-items: flex-start;
-  gap: 0.625rem;
+  gap: 8px;
 }
 
 /* A miniature of the GILT headband — the legend sentence names the gilt one, so
@@ -89,8 +115,15 @@
   stay reachable.
 */
 .viewport {
+  /* The shared motion tokens, resolved once for the whole subtree. See the
+     MOTION note at the top of the file for why each var() carries a literal. */
+  --ease: var(--salon-ease, cubic-bezier(0.25, 1, 0.5, 1));
+  --dur-ui: var(--salon-dur-ui, 240ms);
+
   overflow-x: auto;
-  padding: 56px 48px 80px;
+  padding-block-start: 56px;
+  padding-block-end: 80px;
+  padding-inline: 48px;
   overscroll-behavior-x: contain;
 }
 
@@ -105,6 +138,23 @@
   margin-inline: auto;
 }
 
+/*
+  SHADOW RECIPE, used by .case and .board alike. §1.3 says a dark ground gets an
+  inset hairline and no drop shadow; on these two objects that is simply wrong,
+  and this file is the evidence. What makes the difference between a shadow that
+  reads and one that reads cheap:
+
+    - tint, never pure black. #131C18 is this object's own darkest colour, the
+      far stop of .edgeRight, so the shadow is the case falling away from itself
+      rather than a grey wash laid over the plate.
+    - stack, never one layer. Each is y / 2y blur / -y/2 spread, so contact,
+      mid and ambient fall off at different rates the way a real one does.
+    - scale with the object. These are fixed px because the case is fixed at
+      566px; the crate's are fractions of --cr-jacket because that one resizes.
+
+  box-shadow does not flatten preserve-3d — only filter, opacity < 1, non-visible
+  overflow, clip-path and mask do — so this is safe on the 3D chain.
+*/
 .case {
   position: relative;
   width: 566px;
@@ -112,7 +162,10 @@
   background: #1a2620;
   box-shadow:
     inset 0 0 0 1px rgba(221, 238, 255, 0.07),
-    inset 0 26px 40px -22px rgba(0, 0, 0, 0.85);
+    inset 0 26px 40px -22px rgba(0, 0, 0, 0.85),
+    0 6px 12px -3px rgba(19, 28, 24, 0.34),
+    0 18px 36px -9px rgba(19, 28, 24, 0.4),
+    0 48px 96px -24px rgba(19, 28, 24, 0.46);
   transform: rotateX(4deg) rotateY(-21deg);
   transform-style: preserve-3d;
 }
@@ -174,22 +227,36 @@
   transform-style: preserve-3d;
 }
 
+/* Same shadow recipe as .case: tinted with #131C18, stacked, each layer
+   y / 2y blur / -y/2 spread. The old single `0 16px 26px -14px black` put the
+   whole falloff at one rate, which is what makes a shadow read as a grey wash
+   laid over the object rather than as the board hanging off the case. */
 .board {
   width: 100%;
   height: 11px;
-  border-radius: 1px;
+  border-radius: 2px;
   background: linear-gradient(#5a6b5e, #26332a);
   box-shadow:
     inset 0 0 0 1px rgba(221, 238, 255, 0.1),
-    0 16px 26px -14px rgba(0, 0, 0, 0.9);
+    0 4px 8px -2px rgba(19, 28, 24, 0.5),
+    0 10px 20px -5px rgba(19, 28, 24, 0.52),
+    0 22px 44px -11px rgba(19, 28, 24, 0.58);
 }
 
+/* The shared mono label, not a local one. This is the shelf's visible text AND
+   the accessible name of its list (see Bookcase.tsx), so it is content, and at
+   8.5px it was the only sub-10px text in the staff area — below the app's own
+   floor while every other mono label sat at 10px.
+
+   Colour is the one local override. #7E9186 is tuned against the case interior
+   #1A2620 rather than the page ground, where it measures 4.68:1; --salon-muted
+   is a page-ground value and reads hot inside the case. */
 .caption {
-  font-family: var(--salon-font-mono);
-  font-size: 8.5px;
-  letter-spacing: 0.16em;
+  composes: salon-label from global;
   color: #7e9186;
-  padding: 6px 0 0 16px;
+  /* 16px matches .row's left padding, so the caption ranges off the same line
+     the books stand on. */
+  padding: 8px 0 0 16px;
   margin: 0;
 }
 
@@ -204,10 +271,11 @@
   flex-shrink: 0;
   transform-origin: bottom center;
   /* Rule 14. --lean is 0deg on the 35 upright volumes; --lift is the pointer /
-     keyboard response on the 13 that link out. Composed here so the two never
-     fight over the transform property. */
+     keyboard response on the 13 that link out, taken from --salon-lift so it is
+     the same 4px every other control in the staff area moves — and so reduced
+     motion zeroes it at the token rather than merely removing its transition. */
   transform: rotate(var(--lean, 0deg)) translateY(var(--lift, 0px));
-  transition: transform 0.32s cubic-bezier(0.2, 0.7, 0.3, 1);
+  transition: transform var(--dur-ui) var(--ease);
 }
 
 /*
@@ -225,7 +293,7 @@
 .cloth {
   position: absolute;
   inset: 0;
-  border-radius: 1.5px;
+  border-radius: 2px;
   background-image:
     repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.02) 0 0.5px, rgba(0, 0, 0, 0.02) 0.5px 1px),
     repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.03) 0 0.5px, rgba(255, 255, 255, 0.012) 0.5px 1px),
@@ -451,12 +519,12 @@
   inset: 0;
   z-index: 2;
   display: block;
-  border-radius: 1.5px;
+  border-radius: 2px;
 }
 
 .spine:has(.guideLink:hover),
 .spine:has(.guideLink:focus-visible) {
-  --lift: -5px;
+  --lift: calc(-1 * var(--salon-lift, 4px));
 }
 
 .guideLink:focus-visible {

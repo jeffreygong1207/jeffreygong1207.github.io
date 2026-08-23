@@ -1,6 +1,6 @@
 import Bookcase from '@/components/staff/Bookcase'
 import styles from '@/components/staff/Bookcase.module.css'
-import { GUIDE_COUNT, SHELVES, TOTAL_VOLUMES } from '@/lib/coursework'
+import { SHELVES, TOTAL_VOLUMES } from '@/lib/coursework'
 
 export const metadata = { title: 'Coursework', robots: { index: false, follow: false } }
 
@@ -15,26 +15,25 @@ export const metadata = { title: 'Coursework', robots: { index: false, follow: f
  * than the page (§1.2). Not a bordered card: no border, no border-radius and no
  * drop shadow, because a drop shadow is invisible on #233226. The plate's only
  * edge is the inset hairline that class already carries (§1.3).
+ *
+ * The header states what the page holds and decodes the one visual encoding a
+ * reader cannot infer. It does not narrate the affordances, editorialise about
+ * the data, or explain what the objects deliberately do not do.
  */
 export default function CourseworkPage() {
   return (
     <div className="salon-wide">
       <header className={styles.header}>
-        <h1 className={styles.title}>Coursework</h1>
+        <h1 className="salon-h1">Coursework</h1>
         <p className={styles.standfirst}>
           {TOTAL_VOLUMES} volumes, bound by department and shelved across {SHELVES.length}{' '}
-          academic years at Berkeley. Cloth colour is the department; width and height are the
-          course.
+          academic years at Berkeley. Cloth colour is the department.
         </p>
         <p className={styles.legend}>
           <span className={styles.legendSwatch} aria-hidden="true" />
           <span>
-            <span className={styles.legendStrong}>
-              {GUIDE_COUNT} of the {TOTAL_VOLUMES} carry a gilt headband
-            </span>{' '}
-            — those courses have a mastery guide, and the spine opens the PDF on Drive in a new
-            tab. All {GUIDE_COUNT} are COMPSCI or EECS; none are UGBA. The remaining{' '}
-            {TOTAL_VOLUMES - GUIDE_COUNT} spines are blind-stamped and do not link anywhere.
+            A <span className={styles.legendStrong}>gilt headband</span> marks a course with a
+            mastery guide.
           </span>
         </p>
       </header>

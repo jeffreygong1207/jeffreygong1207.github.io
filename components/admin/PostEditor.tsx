@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useRef, useState, useTransition } from 'react'
+import { useCallback, useEffect, useRef, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
@@ -31,6 +31,34 @@ export default function PostEditor({ post }: { post: Post }) {
   const [uploading, setUploading] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const coverInput = useRef<HTMLInputElement>(null)
+
+  // Deleting a post is the only irreversible action in the product, and
+  // opening the confirmation unmounts the button that opened it. Without this
+  // focus falls to <body>: a keyboard user is dumped at the top of the
+  // document and has to tab through the whole sidebar and editor to reach the
+  // Delete/Cancel pair they just summoned, and a screen reader is told nothing
+  // happened at all.
+  const deleteTrigger = useRef<HTMLButtonElement>(null)
+  const confirmBox = useRef<HTMLDivElement>(null)
+  // Only a cancel returns focus to the trigger. A ref rather than state
+  // because the first render must not move focus anywhere.
+  const returnFocus = useRef(false)
+
+  useEffect(() => {
+    if (confirmDelete) {
+      confirmBox.current?.focus()
+      return
+    }
+    if (returnFocus.current) {
+      returnFocus.current = false
+      deleteTrigger.current?.focus()
+    }
+  }, [confirmDelete])
+
+  function cancelDelete() {
+    returnFocus.current = true
+    setConfirmDelete(false)
+  }
 
   const uploadImage = useCallback(async (file: File): Promise<string | null> => {
     const supabase = createClient()
@@ -269,7 +297,7 @@ export default function PostEditor({ post }: { post: Post }) {
             aria-labelledby="post-cover-label post-cover"
             onClick={() => coverInput.current?.click()}
             disabled={uploading}
-            className={`${styles.btn} ${styles.btnDashed}`}
+            className={`${styles.btn} ${styles.btnPlate}`}
           >
             {uploading ? 'Uploading…' : coverUrl ? 'Replace' : 'Upload'}
           </button>
@@ -279,8 +307,25 @@ export default function PostEditor({ post }: { post: Post }) {
         <p className={styles.readTime}>{post.reading_minutes} min read</p>
 
         {confirmDelete ? (
-          <div className="space-y-2">
-            <p className={styles.confirmText}>Delete this post permanently?</p>
+          // A named group, not role="alertdialog": an alertdialog carries an
+          // APG expectation of modality and a focus trap, and this is an
+          // inline block in the rail with the rest of the editor still live
+          // behind it. Claiming the role without the behaviour is worse than
+          // not claiming it. The name comes from the question itself, so
+          // moving focus here announces what is being asked.
+          <div
+            ref={confirmBox}
+            role="group"
+            aria-labelledby="delete-confirm-label"
+            tabIndex={-1}
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') cancelDelete()
+            }}
+            className={`${styles.confirm} space-y-2`}
+          >
+            <p id="delete-confirm-label" className={styles.confirmText}>
+              Delete this post permanently?
+            </p>
             <div className="flex gap-2">
               <form
                 action={async () => {
@@ -291,7 +336,7 @@ export default function PostEditor({ post }: { post: Post }) {
               </form>
               <button
                 type="button"
-                onClick={() => setConfirmDelete(false)}
+                onClick={cancelDelete}
                 className={`${styles.btn} ${styles.btnGhost}`}
               >
                 Cancel
@@ -300,6 +345,7 @@ export default function PostEditor({ post }: { post: Post }) {
           </div>
         ) : (
           <button
+            ref={deleteTrigger}
             type="button"
             onClick={() => setConfirmDelete(true)}
             className={`${styles.btn} ${styles.btnDanger}`}

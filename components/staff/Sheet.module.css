@@ -21,8 +21,9 @@
 
 /* Wraps the whole editor, sheet column and rail alike, so both sides of the
    grid share one set of paper values. Contrast is against #EFEAE7:
-   ink-2 = 5.6:1, ink-3 = 4.7:1, rule-strong = 3.9:1 as a control boundary. */
-.surface {
+   ink-2 = 5.63:1, ink-3 = 4.71:1, rule-strong = 3.77:1 as a control boundary. */
+.surface,
+.sheet {
   --sheet-rule: rgba(44, 41, 38, 0.18);
   --sheet-rule-mid: rgba(44, 41, 38, 0.28);
   --sheet-rule-strong: rgba(44, 41, 38, 0.6);
@@ -30,6 +31,35 @@
   --sheet-ink-3: rgba(44, 41, 38, 0.68);
   --sheet-wash: rgba(44, 41, 38, 0.07);
 
+  /* THE PAPER ACCENT. --salon-accent-d (#A05A28) is 4.41:1 on #EFEAE7 —
+     measured, not assumed — so it fails 1.4.3 as text at every size this file
+     sets (18.5px regular links, 13px labels). The comment it replaced rejected
+     #DEA279 at 3.25:1 and then declared accent-d safe without measuring it;
+     Slate.module.css measured the same pair, got 4.4:1, and correctly used it
+     as a 2px rule only.
+
+     #995626 is the same hue and saturation (hsl 25°, 60%) two lightness points
+     down: 4.74:1 on the sheet, so it clears AA as body text and as the ground
+     under --salon-sheet on the primary button. It now lives in globals.css as
+     --salon-accent-sheet, beside the other two accents, so a third paper
+     surface takes the token instead of inventing a sixth orange. The literal
+     stays as the fallback: this file must survive the token being dropped.
+
+     --sheet-danger is the ink already used by the solid delete button
+     (7.84:1). Text and solid now share it, so the destructive action reads as
+     one colour in both states instead of borrowing the accent. */
+  --sheet-accent: var(--salon-accent-sheet, #995626);
+  --sheet-danger: #7a2f14;
+
+  /* W3 owns the curve and the durations; nothing here writes its own. The
+     fallbacks are the same values, so a dropped custom property degrades to
+     the intended timing rather than to `initial`. Only the hover grammar uses
+     them — there is no reveal duration here because there is no reveal. */
+  --sheet-ease: var(--salon-ease, cubic-bezier(0.25, 1, 0.5, 1));
+  --sheet-dur-ui: var(--salon-dur-ui, 240ms);
+}
+
+.surface {
   color: var(--salon-sheet-ink);
   font-family: var(--salon-font-ui);
 }
@@ -40,6 +70,24 @@
    night, so the sheet takes over the ground instead. */
 .sheet {
   min-width: 0;
+}
+
+/* ---- one focus ring ----------------------------------------------------- */
+/* Every focusable thing on the paper takes the same ring: 2px, offset 2px, in
+   the paper accent. The offsets used to be 1px on the toolbar and the fields
+   and 2px on the buttons, which read as three different products. */
+
+.tbBtn:focus-visible,
+.control:focus-visible,
+.btn:focus-visible,
+.coverRemove:focus-visible,
+/* `:focus`, not `:focus-visible`: the confirmation is a container that only
+   ever receives focus programmatically, and browsers do not match
+   :focus-visible on a scripted focus of a non-interactive element. Without
+   this the keyboard user is moved somewhere with nothing to see. */
+.confirm:focus {
+  outline: 2px solid var(--sheet-accent);
+  outline-offset: 2px;
 }
 
 .title,
@@ -74,12 +122,24 @@
 }
 
 /* A text caret is a weak focus indicator on its own, and the rules these
-   replaced used a bare `focus:outline-none`. A struck underline in the sheet
-   accent is unambiguous and costs no layout. */
+   replaced used a bare `focus:outline-none`. These two are full-measure fields
+   set in the reading face, so they take a struck underline at the ring's weight
+   rather than a box around 592px of paper. */
 .title:focus-visible,
 .subtitle:focus-visible {
   outline: none;
-  box-shadow: 0 2px 0 0 var(--salon-accent-d);
+  box-shadow: 0 2px 0 0 var(--sheet-accent);
+}
+
+/* Forced colours discards box-shadow, which would leave the two primary
+   editor fields with nothing but the caret. The box the rule above avoids for
+   aesthetic reasons comes back where legibility is the only concern. */
+@media (forced-colors: active) {
+  .title:focus-visible,
+  .subtitle:focus-visible {
+    outline: 2px solid Highlight;
+    outline-offset: 2px;
+  }
 }
 
 .cover {
@@ -97,10 +157,14 @@
   right: 0.75rem;
   top: 0.75rem;
   padding: 0.25rem 0.75rem;
+  border: 0;
   background: var(--salon-sheet-ink);
   color: var(--salon-sheet);
   font-family: var(--salon-font-ui);
   font-size: 12px;
+  cursor: pointer;
+  --btn-hover: #443f3a;
+  --btn-hover-ink: var(--salon-sheet);
 }
 
 /* ---- toolbar ------------------------------------------------------------ */
@@ -136,23 +200,15 @@
   font-size: 14px;
   line-height: 1;
   cursor: pointer;
-  transition: background-color 0.15s ease, color 0.15s ease;
 }
 
-.tbBtn:hover {
-  background: var(--sheet-wash);
-  color: var(--salon-sheet-ink);
-}
-
-.tbBtn:focus-visible {
-  outline: 2px solid var(--salon-accent-d);
-  outline-offset: 1px;
-}
-
-.tbBtnOn,
-.tbBtnOn:hover {
+/* Folded into the hover grammar rather than opting out of it: a pressed
+   toolbar button is a solid, so it lifts on hover exactly like the primary. */
+.tbBtnOn {
   background: var(--salon-sheet-ink);
   color: var(--salon-sheet);
+  --btn-hover: #443f3a;
+  --btn-hover-ink: var(--salon-sheet);
 }
 
 .tbDivider {
@@ -195,9 +251,30 @@
   font-size: 13px;
 }
 
-.control:focus-visible {
-  outline: 2px solid var(--salon-accent-d);
-  outline-offset: 1px;
+/* ---- one hover grammar -------------------------------------------------- */
+/* Four buttons used to speak three languages: the primary changed hue outright
+   (#2C2926 -> #A05A28, which also dropped it to 4.41:1 against its own label
+   the moment the pointer touched it), the ghost took a 7% wash, and neither
+   delete button reacted at all.
+
+   Now there is one rule. Hover moves background-color exactly one step and
+   never moves hue: an unfilled button takes the paper's 7% ink wash, a solid
+   button lifts its own ink by one step. Each button supplies the value; the
+   grammar is written once. */
+
+.btn,
+.tbBtn,
+.coverRemove {
+  transition: background-color var(--sheet-dur-ui) var(--sheet-ease),
+    color var(--sheet-dur-ui) var(--sheet-ease),
+    border-color var(--sheet-dur-ui) var(--sheet-ease);
+}
+
+.btn:hover:not(:disabled),
+.tbBtn:hover,
+.coverRemove:hover {
+  background-color: var(--btn-hover, var(--sheet-wash));
+  color: var(--btn-hover-ink, var(--salon-sheet-ink));
 }
 
 .btn {
@@ -209,12 +286,6 @@
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
-  transition: background-color 0.15s ease, color 0.15s ease;
-}
-
-.btn:focus-visible {
-  outline: 2px solid var(--salon-accent-d);
-  outline-offset: 2px;
 }
 
 .btn:disabled {
@@ -222,49 +293,77 @@
   cursor: default;
 }
 
+/* Solid ink. Hover lifts to #443F3A — 8.72:1 under --salon-sheet, and the same
+   hue family, so the label never crosses AA and the button never changes
+   colour, only depth. */
 .btnPrimary {
   background: var(--salon-sheet-ink);
   color: var(--salon-sheet);
-}
-
-.btnPrimary:hover:not(:disabled) {
-  background: var(--salon-accent-d);
+  --btn-hover: #443f3a;
+  --btn-hover-ink: var(--salon-sheet);
 }
 
 .btnGhost {
   border-color: var(--sheet-rule-strong);
 }
 
-.btnGhost:hover:not(:disabled) {
-  background: var(--sheet-wash);
-}
-
-.btnDashed {
+/* Was a dashed border. A dashed rectangle is the canonical wireframe tell, so
+   the dash went — but the edge is not the dash. At --sheet-rule the border is
+   1.40:1 on the paper over a wash that is 1.13:1, which is no boundary at all
+   until the pointer arrives; the dash it replaced was already at rule-strong.
+   So the border rests at rule-strong, the same edge .btnGhost keeps, and hover
+   moves the fill alone. (The dark-ground plate on /admin/media works because
+   --salon-plate is a real value step against --salon-ground; a 7% wash on
+   paper is not, so that precedent does not carry here.) */
+.btnPlate {
   width: 100%;
-  border: 1px dashed var(--sheet-rule-strong);
+  border: 1px solid var(--sheet-rule-strong);
+  background: var(--sheet-wash);
   color: var(--sheet-ink-2);
   font-weight: 400;
+  --btn-hover: rgba(44, 41, 38, 0.12);
 }
 
-.btnDashed:hover:not(:disabled) {
-  background: var(--sheet-wash);
-  color: var(--salon-sheet-ink);
-}
-
+/* Negative margin against equal padding: the label still sits flush with the
+   rail's left edge, but the hover wash has a shape to fill. */
 .btnDanger {
-  padding-left: 0;
-  padding-right: 0;
-  color: var(--salon-accent-d);
+  margin-inline: -0.5rem;
+  padding-inline: 0.5rem;
+  color: var(--sheet-danger);
   font-weight: 400;
   text-decoration: underline;
   text-underline-offset: 3px;
+  --btn-hover-ink: var(--sheet-danger);
 }
 
 .btnDangerSolid {
-  background: #7a2f14;
+  background: var(--sheet-danger);
   color: var(--salon-sheet);
+  --btn-hover: #8e3a19;
+  --btn-hover-ink: var(--salon-sheet);
 }
 
+/* ---- delete confirmation ------------------------------------------------ */
+/* Focus lands here when the block opens (PostEditor moves it), so the block is
+   a focus target with a name rather than a silent DOM swap.
+
+   It appears with no transition, deliberately. The 300ms opacity fade that
+   used to run started on the same frame the effect called focus(), so the
+   destructive question and its focus ring sat at part opacity for exactly the
+   moment the block most has to be legible. A confirmation is not a reveal. */
+
+.confirmText {
+  color: var(--salon-sheet-ink);
+  font-size: 13px;
+}
+
+/* The status line. The <p aria-live="polite"> that carries this is permanent
+   in the tree and only swaps className, so it is never inserted and never
+   changes `display` — the @starting-style that used to sit here could not have
+   run for it under any browser. Removed rather than left as a claim the
+   markup does not support. Nothing in this file animates on entry now, which
+   also means nothing in it can leave content invisible while a transition or
+   a stylesheet is in flight. */
 .message {
   padding: 0.5rem 0.625rem;
   background: var(--sheet-wash);
@@ -280,11 +379,6 @@
   font-size: 11px;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-}
-
-.confirmText {
-  color: var(--salon-sheet-ink);
-  font-size: 13px;
 }
 
 /* ---- prose-editor overrides --------------------------------------------- */
@@ -335,9 +429,10 @@
 }
 
 .sheet :global(.prose-editor) a {
-  /* 1.1: #DEA279 is 3.25:1 on the sheet and fails. The hue-locked sibling is
-     the only accent that may appear on paper. */
-  color: var(--salon-accent-d);
+  /* Body links at 18.5px/400 — no large-text exemption applies. --sheet-accent
+     is 4.74:1 here; --salon-accent-d, which this rule used to carry, is
+     4.41:1 and fails. */
+  color: var(--sheet-accent);
   text-decoration-thickness: 1px;
 }
 

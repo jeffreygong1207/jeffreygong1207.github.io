@@ -22,15 +22,11 @@ export default function Crate() {
     <div className={styles.page}>
       <CrateFilters />
 
+      {/* States what the page holds. It does not describe the label system that
+          draws it — that rationale is spec 2.3 and belongs in the spec. */}
       <header className={styles.head}>
-        <h1 className={styles.title}>The Crate</h1>
-        <p className={styles.standfirst}>
-          Eleven records pressed from one label. Same margins, same identity strip, same two inks
-          and one grain on every sleeve — only the hue moves around the ring.
-        </p>
-        <span className={styles.count}>
-          {PROJECTS.length} sides · {catalogueNumber(0)}—{catalogueNumber(PROJECTS.length - 1)}
-        </span>
+        <h1 className="salon-h1">The Crate</h1>
+        <span className={styles.count}>{PROJECTS.length} projects</span>
       </header>
 
       <ul className={styles.crate}>

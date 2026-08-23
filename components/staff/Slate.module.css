@@ -1,104 +1,197 @@
 /* ===========================================================================
-   The slate — /admin/experience. Spec §2.4, §1.2, §1.3, §3.
+   The slate — /admin/experience. Spec §2.4, §1.2, §3.
 
-   A generic, unbranded tablet: CSS 3D shell, flat HTML screen. Nothing on the
-   screen is 3D, because reading never happens inside a 3D surface (§1).
+   GEOMETRY. Zero rotation, deliberately. Depth is bought with material, not
+   perspective: the chassis has real thickness (.edge), a cast shadow, an
+   asymmetric top-lit rim and a glass sheet over the whole face. Eight product
+   pages that render hardware — apple, stripe, databricks, raycast, vercel,
+   linear, rive — all sit at 0°, and the arithmetic says why: at the -13deg this
+   file used to ship, the visible side face was 2.6px (below the 3px that reads
+   as a border artifact) while the near edge was already 10.7% taller than the
+   far one. Enough distortion to read crooked, not enough to read solid.
+   If the angle ever comes back, the only defensible variant is
+   `perspective: 1100px` + `rotateY(-32deg) rotateX(5deg)` with --depth raised to
+   ~4.6cqw, so the side face resolves at 11.5px. Nothing between 1° and 29°.
 
-   THE preserve-3d CHAIN IS EXACTLY TWO ELEMENTS: .stage (perspective) and
-   .device (transform + transform-style). Do not put `filter`, `opacity < 1`,
-   `overflow` other than visible, `clip-path` or `mask` on either of them —
-   every one of those silently forces transform-style back to `flat`, which has
-   already rendered a whole surface flat once in this project. The screen needs
-   overflow:hidden to clip its own rounded corners, so that lives on .clip, a
-   child that is NOT part of the chain: it carries no transform and nothing
-   below it is 3D.
+   PROPORTIONS come from an iPad Pro 13" M4 (281.6 x 215.5 x 5.1mm) and are
+   expressed in cqw against .stage so they hold at every width. The corner radii
+   are a concentric EQUATION, not a ratio — R_device = R_screen + bezel — which
+   is why --r-device is computed rather than typed. Typing it is how the old
+   build ended up with a bezel that pinched 3px narrower at each corner.
+
+   Nothing on this surface is 3D-transformed, so none of the preserve-3d hazards
+   in §3 apply here any more: filter/opacity/overflow are all safe.
    =========================================================================== */
 
 /* §1.2: the object sits on a plate 1–4% off the page, not in a bordered card.
-   Background only — no border, no border-radius, no box-shadow. The §1.3 inset
-   hairline belongs to the OBJECT (see .device), not to the ground it stands on;
-   giving both a ring makes the plate read as a card again. */
+   Background only. The §1.3 inset hairline belongs to the OBJECT, not to the
+   ground it stands on. Padding is generous because the object now casts a real
+   shadow and the plate has to hold it. */
 .plate {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 28px 24px;
-  background: var(--salon-plate);
+  padding: 30px 20px;
+  background: var(--salon-plate, #141e17);
 }
 
 @media (min-width: 768px) {
   .plate {
-    padding: 40px 32px;
+    padding: 46px 32px;
   }
 }
 
 .stage {
-  width: min(496px, 100%);
-  perspective: 2400px;
-  perspective-origin: 50% 42%;
+  position: relative;
+
+  /* Body thickness, 2.37% of body width — 11.7px at the 496px stage. Reserved
+     in flow so the chassis edge sits inside the plate rather than over it.
+     NOT in cqw: .stage is the query container, and an element cannot query
+     itself — cqw here silently resolves against the viewport instead. Both
+     values below resolve their percentage against the same containing block,
+     so they stay locked together at every width. */
+  --stage-w: min(496px, 100%);
+  width: var(--stage-w);
+  padding-bottom: calc(var(--stage-w) * 0.02359);
+  container-type: inline-size;
 }
 
-.device {
-  /* Rest pose. Slate.tsx writes these two properties directly on pointer move
-     (§3 keeps pointer-driven response alive under reduced motion) — it never
-     rewrites `transform`, so the pose stays declarative and one place owns it. */
-  --tilt-y: -13deg;
-  --tilt-x: 3deg;
+/* --------------------------------------------------------------------------
+   THE CHASSIS EDGE. The object had no thickness at all before this: a 496px
+   tablet whose entire z-extent was a 2px translateZ. Inset a hair on each side
+   so the corners foreshorten, and lit along its top chamfer only.
+   -------------------------------------------------------------------------- */
+.edge {
+  position: absolute;
+  inset: 0 0.3cqw 0;
+  z-index: 0;
+  --depth: 2.359cqw;
+  border-radius: calc(2.621cqw + 3.9315cqw);
+  /* The edge is a face turned away from the light: DARKER than the front, with
+     one thin lit chamfer where it turns. Lighten it and it stops being the same
+     object — it reads as a lip or a stand parked under the slate. */
+  background:
+    linear-gradient(
+        to bottom,
+        rgba(255, 255, 255, 0.13) 0%,
+        #2b221b 15%,
+        #1a1410 52%,
+        /* Darkest at 86%, not at the edge — a gradient that bottoms out at the
+           boundary reads flat. Same rule as the book spines. */ #100c0a 86%,
+        #17120e 100%
+      )
+      bottom / 100% var(--depth) no-repeat,
+    #1a1410;
+  /* Overruling §1.3's "a drop shadow is invisible on #233226". The two other 3D
+     objects in the staff area both cast one (Crate .sleeve, Bookcase .board)
+     and they are the two that read as solid; the slate was the only one
+     floating on nothing. Tinted to the ground's hue — pure black greys out and
+     reads washed — and layered broad + contact + hairline. §1.3's own "dark
+     mode needs ~5x light-mode opacity" predicts the 0.42 exactly. */
+  box-shadow:
+    0 4px 40px 8px rgba(9, 18, 11, 0.42),
+    0 24px 40px -22px rgba(0, 0, 0, 0.8),
+    0 0 0 0.5px rgba(0, 0, 0, 0.8);
+}
 
+/* --------------------------------------------------------------------------
+   THE FACE
+   -------------------------------------------------------------------------- */
+.device {
+  position: relative;
+  z-index: 1;
   box-sizing: border-box;
   width: 100%;
-  /* A floor, not a fixed height: six roles with a placeholder each land just
-     inside it, and anything that wraps grows the slate rather than being
-     clipped. Clipped text is unreadable text. */
-  min-height: 642px;
+
+  --bezel: 3.9315cqw; /* 19.5px — 3.93% of body width, UNIFORM on all four
+                         sides, which is what separates a tablet from a phone */
+  --r-screen: 2.621cqw; /* 13px */
+  --r-device: calc(var(--r-screen) + var(--bezel)); /* 32.5px — the equation */
+
+  /* A floor, not a fixed height: 648px at 496px wide (215.5 x 281.6mm), and
+     anything that wraps grows the slate rather than being clipped. */
+  min-height: 130.645cqw;
   display: flex;
-  padding: 13px;
-  border-radius: 22px;
+  padding: var(--bezel);
+  border-radius: var(--r-device);
+
   /* Unbranded body. Warm graphite so it reads as an object in this room rather
      than as a specific product someone else designed. */
   background: linear-gradient(150deg, #3a3129 0%, #221b15 60%, #171210 100%);
-  /* §1.3: on a dark ground an object gets an inset hairline, never a drop
-     shadow — a drop shadow is invisible on #233226. */
-  box-shadow: inset 0 0 0 1px rgba(221, 238, 255, 0.14);
-  transform: rotateY(var(--tilt-y)) rotateX(var(--tilt-x));
-  transform-style: preserve-3d;
-  /* Short enough that pointer tracking does not lag behind the cursor, long
-     enough to smooth the return to rest. The foundation's shared
-     prefers-reduced-motion block clamps this to 0.01ms. */
-  transition: transform 140ms ease-out;
+
+  /* Measured off a real app window on a dark ground. The top edge light is
+     SUB-PIXEL and TOP-ONLY: that asymmetry is what makes it read as a lit edge
+     rather than as a border. Four equal insets read as a border. */
+  box-shadow:
+    inset 0 0.5px 0 rgba(255, 255, 255, 0.3),
+    /* §1.3, and vercel ships rgba(255,255,255,0.145) — same value. */
+      inset 0 0 0 1px rgba(221, 238, 255, 0.14),
+    0 0 0 0.5px rgba(0, 0, 0, 0.8);
 }
 
-/* The only autonomous motion on this surface: a one-shot settle on mount.
-   Gated twice — Slate.tsx drops this class when useReducedMotion() reports
-   true, and the foundation's media query would clamp it anyway. No fill mode,
-   so the animation releases straight onto the var-driven rest pose. */
-.enter {
-  animation: settle 620ms cubic-bezier(0.2, 0.7, 0.2, 1);
-}
-
-@keyframes settle {
-  from {
-    transform: rotateY(-19deg) rotateX(6.5deg) translateZ(-44px);
-  }
+/* The cover glass, over the whole face — bezel included, as on the real object.
+   Three layers and no more: a broad sky reflection, ONE specular sweep at the
+   104° laminate angle the crate already uses, and the lit edge above.
+   Fresnel for n=1.5 is flat at 4.0% reflectance until ~50°, so these alphas are
+   .02–.13; a white streak at 0.2 is the classic fake-glass tell. Against the
+   light screen the sweep is all but invisible and against the dark bezel it
+   reads clearly, which is exactly what a sheet of glass does. */
+.device::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  border-radius: inherit;
+  background:
+    linear-gradient(
+      104deg,
+      transparent 38%,
+      rgba(255, 255, 255, 0.13) 45%,
+      rgba(255, 255, 255, 0.05) 50%,
+      transparent 57%
+    ),
+    linear-gradient(
+      168deg,
+      rgba(255, 255, 255, 0.055) 0%,
+      rgba(255, 255, 255, 0.02) 22%,
+      transparent 46%
+    );
 }
 
 .screen {
   flex: 1;
   min-width: 0;
-  /* Real separation between the two planes, which is what .device's preserve-3d
-     is for: the glass parallaxes against the chassis edge as the slate turns,
-     rather than being a border painted on one flat plane.
-     POSITIVE z, not negative: .device paints its own background at z=0, so a
-     child behind that plane is occluded by it and the screen disappears
-     entirely. Cover glass sitting proud of the chassis is also what the real
-     object does. Depth reads inward from the inset ring below. */
-  transform: translateZ(2px);
-  border-radius: 12px;
-  background: var(--salon-sheet);
-  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.34);
+  border-radius: var(--r-screen);
+  background: var(--salon-sheet, #efeae7);
+  /* The bezel's own shadow falling on the glass, plus the seam. */
+  box-shadow:
+    inset 0 1px 2px rgba(0, 0, 0, 0.3),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.34);
 }
 
-/* Corner clipping lives here, off the 3D chain (see the file header). */
+/* Apple's corners are continuous, k=2. Progressive enhancement: browsers
+   without it keep the circular corner, which is already correct.
+   The clip MUST inherit the shape as well as the radius, or a circular clip
+   cuts a sliver inside a squircle frame. */
+@supports (corner-shape: squircle) {
+  .edge,
+  .device {
+    corner-shape: squircle;
+  }
+
+  .device::after,
+  .screen {
+    corner-shape: squircle;
+  }
+
+  .clip {
+    corner-shape: inherit;
+  }
+}
+
+/* Corner clipping lives here, off the .screen box, so .screen keeps its own
+   inset ring un-clipped. */
 .clip {
   display: flex;
   flex-direction: column;
@@ -111,15 +204,12 @@
      surface — the same argument §1.1 makes for shipping --salon-accent-d
      alongside --salon-accent. Ratios below are against #EFEAE7.
        ink   #2C2926  12.0:1  primary
-       ink-2 #5E5852   5.8:1  positions, dates, footer
-       ink-3 #6B645D   4.8:1  the placeholder slug — subtler, still ≥4.5:1
+       ink-2 #5E5852   5.8:1  positions, dates, marks
      Nothing on this screen is below 10px. */
-  --ink: var(--salon-sheet-ink);
+  --ink: var(--salon-sheet-ink, #2c2926);
   --ink-2: #5e5852;
-  --ink-3: #6b645d;
   --rule: #e3dcd5;
   --rule-strong: #d9d2cb;
-  --chip: #e5ded7;
 
   color: var(--ink);
   /* NO painted status bar, deliberately (§2.4): a real device draws its own on
@@ -131,12 +221,12 @@
   align-items: baseline;
   justify-content: space-between;
   gap: 12px;
-  padding: 14px 20px 11px;
+  padding: 15px 20px 12px;
   border-bottom: 1px solid var(--rule-strong);
 }
 
 .headTitle {
-  font-family: var(--salon-font-read);
+  font-family: var(--salon-font-read, Georgia, serif);
   font-size: 19px;
   font-weight: 600;
   line-height: 1.2;
@@ -144,7 +234,7 @@
 }
 
 .headRange {
-  font-family: var(--salon-font-mono);
+  font-family: var(--salon-font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
   font-size: 10px;
   letter-spacing: 0.12em;
   color: var(--ink-2);
@@ -152,15 +242,25 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* The rows share the screen's free height instead of stacking at the top and
+   leaving a third of the glass dead. Each row is centred in its share, so six
+   roles read as a designed list rather than as a stub. */
 .roles {
   flex: 1;
+  display: flex;
+  flex-direction: column;
   margin: 0;
-  padding: 0 20px;
+  padding: 0;
   list-style: none;
 }
 
 .role {
-  padding: 12px 0;
+  flex: 1;
+  min-height: 56px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 10px 20px;
   border-bottom: 1px solid var(--rule);
 }
 
@@ -168,10 +268,16 @@
   border-bottom: 0;
 }
 
+/* The screen had no state change of any kind. A row wash — no pointer cursor,
+   because a row without a `url` is not a control and must not pretend to be. */
+.role:hover,
+.role:focus-within {
+  background-color: rgba(44, 41, 38, 0.045);
+}
+
 /* Centred, not baseline-aligned. A flex container's baseline is synthesised
-   from its first item, so the rows carrying an image chip and the row carrying
-   the letter chip resolve different baselines and the dates step up and down
-   the column. Centring against the 20px mark is stable for every row. */
+   from its first item, so a row carrying a chip and a row carrying plain text
+   resolve different baselines and the dates step up and down the column. */
 .roleHead {
   display: flex;
   align-items: center;
@@ -182,41 +288,36 @@
 .roleName {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 9px;
   min-width: 0;
 }
 
-/* Company mark, normalised to one square so a full-bleed logo and a
-   transparent one sit at the same weight. */
+/* ONE mark treatment across all six rows. The alternative — the logo files on
+   disk — is three formats at three visual weights (two are transparent PNGs,
+   two are JPEGs and one a WebP behind a .png extension, so they can never have
+   transparency) and a half-filled logo row always looks broken. A neutral
+   placeholder box is not an option either; no product page ships one. */
 .mark {
   flex: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 20px;
-  height: 20px;
-  background: var(--chip);
-  overflow: hidden;
-}
-
-.markImg {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-}
-
-/* No mark on file — Stripe. A plain monogram in the display face, NOT a
-   reconstruction of anyone's trademark; this repo is public. */
-.markLetter {
-  font-family: var(--salon-font-display);
-  font-size: 12px;
+  display: grid;
+  place-items: center;
+  /* Sized for two characters, which is what the monogram in Slate.tsx emits so
+     that Stripe and Snowflake do not render the same chip in adjacent rows. */
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  background: #e7e1da;
+  box-shadow: inset 0 0 0 1px rgba(44, 41, 38, 0.1);
+  font-family: var(--salon-font-display, Georgia, serif);
+  font-size: 10px;
   font-weight: 600;
-  letter-spacing: 0.02em;
+  line-height: 1;
+  letter-spacing: 0.03em;
   color: var(--ink-2);
 }
 
 .org {
-  font-family: var(--salon-font-read);
+  font-family: var(--salon-font-read, Georgia, serif);
   font-size: 16px;
   font-weight: 600;
   line-height: 1.2;
@@ -224,25 +325,34 @@
   overflow-wrap: anywhere;
 }
 
-/* Only reachable once a role has a `url`; today none do, so the list is static
-   text and nothing here is given a fake tabindex. */
+/* Only reachable once a role has a `url`. Ink, not accent: --salon-accent-d is
+   tuned for the sheet but lands at 4.41:1, which clears AA at heading sizes and
+   misses it at the 16px this row is set in. Underlined at rest as well, because
+   a link sitting inside running text may not be signalled by colour alone. The
+   accent is kept for the focus ring, which is a non-text component and needs
+   only 3:1. Hover answers by strengthening the underline rather than by
+   recolouring the text: a hover state is held to the same 4.5:1 as a resting
+   one, so there is nowhere for the accent to go here either. */
 .orgLink {
-  color: var(--salon-accent-d);
-  text-decoration: none;
+  color: var(--ink);
+  text-decoration: underline;
+  text-decoration-color: rgba(44, 41, 38, 0.35);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
 }
 
 .orgLink:hover {
-  text-decoration: underline;
-  text-underline-offset: 2px;
+  text-decoration-color: currentcolor;
 }
 
 .orgLink:focus-visible {
   outline: 2px solid var(--salon-accent-d);
   outline-offset: 2px;
+  border-radius: 2px;
 }
 
 .date {
-  font-family: var(--salon-font-mono);
+  font-family: var(--salon-font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
   font-size: 10px;
   letter-spacing: 0.06em;
   color: var(--ink-2);
@@ -251,75 +361,92 @@
 }
 
 .position {
-  margin: 2px 0 0;
+  margin: 3px 0 0;
   font-size: 12.5px;
   line-height: 1.4;
   color: var(--ink-2);
 }
 
-/* §2.4: an explicit, deliberate absence — a ruled slug, not blank space and not
-   lorem. The rule is --salon-accent-d, which is the light-sheet accent; it is
-   used as a 2px rule and never as text, because it scores 4.4:1 here. */
-.placeholder {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-  margin: 7px 0 0;
-  padding-left: 9px;
-  border-left: 2px solid var(--salon-accent-d);
-  font-size: 12px;
+/* Rendered only when a role actually carries `description`. An empty field
+   renders nothing at all — never a badge, never a slug. */
+.note {
+  margin: 6px 0 0;
+  font-size: 12.5px;
   line-height: 1.5;
-  color: var(--ink-3);
-  font-style: italic;
-}
-
-.placeholderTag {
-  font-family: var(--salon-font-mono);
-  font-size: 10px;
-  font-style: normal;
-  letter-spacing: 0.1em;
-  color: var(--ink-3);
-  white-space: nowrap;
-}
-
-.foot {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 10px 20px 12px;
-  border-top: 1px solid var(--rule-strong);
-  font-family: var(--salon-font-mono);
-  font-size: 10px;
-  letter-spacing: 0.1em;
   color: var(--ink-2);
 }
 
-.footPath {
-  letter-spacing: 0.02em;
-  overflow-wrap: anywhere;
+/* --------------------------------------------------------------------------
+   MOTION. One opacity-only reveal on `@starting-style` + `transition`
+   (Baseline 2024-08-06). No library, and no keyframe that starts at
+   `opacity: 0`: the declared state here IS the final state, so a stylesheet
+   that half-arrives — which this deploy pipeline has already done once — yields
+   no animation rather than an invisible slate.
+
+   Curve, durations and the 20ms stagger are the shared tokens, each with its
+   measured value as a fallback, so a dropped custom property degrades to the
+   same motion rather than to none. Travel is 0px; a fade that does not move reads as the most
+   expensive of the options.
+
+   Declared inside `no-preference` so under `reduce` the state flips instantly
+   and content can never fail to appear. The shared block in globals.css clamps
+   these durations too; both gates are deliberate.
+   -------------------------------------------------------------------------- */
+.role {
+  --row-index: 0;
+}
+.role:nth-child(2) {
+  --row-index: 1;
+}
+.role:nth-child(3) {
+  --row-index: 2;
+}
+.role:nth-child(4) {
+  --row-index: 3;
+}
+.role:nth-child(5) {
+  --row-index: 4;
+}
+.role:nth-child(6) {
+  --row-index: 5;
+}
+/* The ladder stops climbing rather than running away if a seventh role lands. */
+.role:nth-child(n + 7) {
+  --row-index: 6;
 }
 
-/* Narrow viewports: the projected footprint of a rotated plane is wider than
-   the plane, and the staff shell has no horizontal scroll to spend on it. Less
-   angle, same object. */
-@media (max-width: 640px) {
+@media (prefers-reduced-motion: no-preference) {
+  .edge,
   .device {
-    --tilt-y: -6deg;
-    --tilt-x: 2deg;
-    min-height: 560px;
-    border-radius: 18px;
+    opacity: 1;
+    transition: opacity var(--salon-dur-reveal, 300ms)
+      var(--salon-ease, cubic-bezier(0.25, 1, 0.5, 1));
   }
 
+  .role {
+    opacity: 1;
+    transition:
+      opacity var(--salon-dur-reveal, 300ms)
+        var(--salon-ease, cubic-bezier(0.25, 1, 0.5, 1))
+        calc(140ms + var(--salon-stagger, 20ms) * var(--row-index)),
+      background-color var(--salon-dur-ui, 240ms)
+        var(--salon-ease, cubic-bezier(0.25, 1, 0.5, 1));
+  }
+
+  @starting-style {
+    .edge,
+    .device,
+    .role {
+      opacity: 0;
+    }
+  }
+}
+
+/* Narrow viewports: everything above is in cqw, so the geometry and the
+   concentric radius equation follow the width down on their own. Only the plate
+   needs adjusting. */
+@media (max-width: 640px) {
   .plate {
-    padding: 20px 14px;
-  }
-
-  /* Two mono runs at 10px with tracking do not share a 230px line; side by side
-     they wrap mid-word and the footer reads as debris. */
-  .foot {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 3px;
+    padding: 22px 14px;
   }
 }

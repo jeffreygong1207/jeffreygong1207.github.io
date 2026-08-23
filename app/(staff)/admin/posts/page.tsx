@@ -25,16 +25,26 @@ const STATUS_DOT: Record<PostStatus, string> = {
 }
 
 // 1.3: inset hairline, not a drop shadow — a drop shadow is invisible on
-// #233226. Inline because `.salon-plate` is unlayered and would beat a Tailwind
-// hover background on the same element.
-const PLATE_RING = { boxShadow: 'inset 0 0 0 1px rgba(221, 238, 255, 0.14)' }
+// #233226. Tailwind utilities rather than the unlayered `.salon-plate` class or
+// an inline style, because both of those beat a `hover:` variant on the same
+// element.
+const PLATE = 'bg-salon-plate shadow-[inset_0_0_0_1px_rgba(221,238,255,0.14)]'
+
+// Two channels on a row, not one. `bg-salon-raised` alone is a small luminance
+// step against the plate; the inset left hairline gives the row a lit edge at
+// the same time. `focus-within` because the hover state lives on the <li> while
+// the thing that takes focus is the title link inside it — without this, a
+// keyboard user lands on a row that lights nothing.
+const ROW_STATE =
+  'transition-[background-color,box-shadow] duration-[240ms] ease-[cubic-bezier(0.25,1,0.5,1)] hover:bg-salon-raised hover:shadow-[inset_2px_0_0_0_rgba(221,238,255,0.30)] focus-within:bg-salon-raised focus-within:shadow-[inset_2px_0_0_0_rgba(221,238,255,0.30)]'
 
 // This page is a server component, so the date is formatted once on the server —
 // where the zone is UTC on Vercel, not the author's. Without an explicit zone,
 // anything saved after 5pm local renders a day ahead of the author's own clock.
-const AUTHOR_TZ = 'America/Los_Angeles'
+// Exported because app/(staff)/admin/page.tsx dates the same rows: two formats
+// with two zones showed one post on two dates for seven hours a day.
+export const AUTHOR_TZ = 'America/Los_Angeles'
 
-const DISPLAY = { fontFamily: 'var(--salon-font-display)' }
 const MONO = { fontFamily: 'var(--salon-font-mono)' }
 
 export default async function PostsIndex({
@@ -64,14 +74,9 @@ export default async function PostsIndex({
   return (
     <>
       <div className="mb-8 flex items-center justify-between gap-4">
-        <h1
-          className="text-[26px] uppercase leading-none tracking-[0.2em] text-salon-ink"
-          style={DISPLAY}
-        >
-          Posts
-        </h1>
+        <h1 className="salon-h1">Posts</h1>
         <form action={createPost}>
-          <button className="bg-salon-accent px-4 py-2 text-[13px] font-medium tracking-wide text-salon-sunken transition-colors hover:bg-salon-gilt focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-salon-ink">
+          <button className="bg-salon-accent px-4 py-2 text-[13px] font-medium tracking-wide text-salon-sunken transition-colors hover:bg-salon-gilt salon-focus">
             New post
           </button>
         </form>
@@ -92,7 +97,7 @@ export default async function PostsIndex({
               key={f.key}
               href={f.key === 'all' ? '/admin/posts' : `/admin/posts?status=${f.key}`}
               aria-current={isActive ? 'page' : undefined}
-              className={`-mb-px border-b-2 px-3 py-2 text-[13px] transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-salon-accent ${
+              className={`-mb-px border-b-2 px-3 py-2 text-[13px] transition-colors salon-focus ${
                 isActive
                   ? 'border-salon-accent font-medium text-salon-ink'
                   : 'border-transparent text-salon-muted hover:text-salon-ink'
@@ -105,15 +110,15 @@ export default async function PostsIndex({
       </div>
 
       {rows.length === 0 ? (
-        <p style={PLATE_RING} className="bg-salon-plate px-6 py-16 text-center text-sm text-salon-muted">
+        <p className={`px-6 py-16 text-center text-sm text-salon-muted ${PLATE}`}>
           {active.key === 'all' ? 'Nothing written yet.' : `No ${active.label.toLowerCase()}.`}
         </p>
       ) : (
-        <ul style={PLATE_RING} className="bg-salon-plate">
+        <ul className={PLATE}>
           {rows.map((post, i) => (
             <li
               key={post.id}
-              className={`flex items-center gap-4 px-4 py-4 transition-colors hover:bg-salon-raised ${
+              className={`flex items-center gap-4 px-4 py-4 ${ROW_STATE} ${
                 i > 0 ? 'border-t border-salon-line' : ''
               }`}
             >
@@ -125,7 +130,7 @@ export default async function PostsIndex({
               <div className="min-w-0 flex-1">
                 <Link
                   href={`/admin/posts/${post.id}`}
-                  className="block truncate text-[15px] text-salon-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-salon-accent"
+                  className="block truncate text-[15px] text-salon-ink salon-focus"
                 >
                   {post.title}
                 </Link>
@@ -146,14 +151,14 @@ export default async function PostsIndex({
               <div className="flex shrink-0 items-center gap-3 text-[13px]">
                 <Link
                   href={`/admin/posts/${post.id}`}
-                  className="text-salon-muted transition-colors hover:text-salon-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-salon-accent"
+                  className="text-salon-muted transition-colors hover:text-salon-ink salon-focus"
                 >
                   Edit<span className="sr-only"> {post.title}</span>
                 </Link>
                 {post.status !== 'draft' && (
                   <Link
                     href={`/blog/${post.slug}`}
-                    className="text-salon-muted transition-colors hover:text-salon-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-salon-accent"
+                    className="text-salon-muted transition-colors hover:text-salon-ink salon-focus"
                   >
                     View<span className="sr-only"> {post.title}</span>
                   </Link>
@@ -169,11 +174,11 @@ export default async function PostsIndex({
 
 function Stat({ label, value }: { label: string; value: number }) {
   return (
-    <div style={PLATE_RING} className="bg-salon-plate px-4 py-4">
-      <p className="text-2xl tabular-nums text-salon-ink" style={{ fontFamily: 'var(--salon-font-mono)' }}>
+    <div className={`px-4 py-4 ${PLATE}`}>
+      <p className="text-[19px] tabular-nums text-salon-ink" style={MONO}>
         {value}
       </p>
-      <p className="mt-1 text-[10px] uppercase tracking-[0.2em] text-salon-muted" style={MONO}>
+      <p className="mt-1 text-[10px] uppercase tracking-[0.13em] text-salon-muted" style={MONO}>
         {label}
       </p>
     </div>

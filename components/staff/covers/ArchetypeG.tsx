@@ -33,7 +33,11 @@ export function ArchetypeG({ ink, title, year, lines }: ArtProps & { lines: stri
           aria-hidden with the rest of the sleeve type: 2.2cqw is 6.16px at the
           280px jacket ceiling and 3.96px at the 180px floor, under the 8px
           legibility floor in spec 3 at every size this page renders. The year
-          it carries is real text at 10px in `.metaFile` below the shot. */}
+          it carries is real text at 10px in `.metaFile` below the shot.
+
+          The year alone. It previously read 'a program written in {year}', which
+          asserts a form no project's data claims — this archetype can receive
+          any of the eleven, so it may only print what is true of all of them. */}
       <div
         aria-hidden="true"
         style={{
@@ -45,7 +49,7 @@ export function ArchetypeG({ ink, title, year, lines }: ArtProps & { lines: stri
           marginTop: '1.4cqw',
         }}
       >
-        a program written in {year}
+        {year}
       </div>
       <div
         aria-hidden="true"

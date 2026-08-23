@@ -17,36 +17,30 @@
    module-scoped. Salon tokens are read as `var(--salon-*)` — NEVER
    `var(--color-salon-*)`, which is Tailwind's `@theme` mirror and is
    tree-shaken to whichever utilities the build actually saw.
+
+   SPACING. Same scale as Bookcase.module.css: 8px base with 4px substeps at
+   the small end — 4 8 12 16 24 32 40 48 56 64 80. Everything that is layout
+   spacing is written in px off that scale. Everything that is object geometry
+   is a fraction of --cr-jacket and is NOT on the scale, because it has to
+   rescale with the object rather than with the page.
+
+   MOTION. Durations and curves come from the shared Salon motion tokens,
+   aliased once on .page. Each var() carries the token's own value as its
+   fallback — not a second opinion — so a build that drops the custom
+   properties still animates instead of collapsing to `all 0s ease`.
    =========================================================================== */
 
 .page {
-  padding-block-end: 3rem;
+  /* The shared motion tokens, resolved once for the whole surface. */
+  --ease: var(--salon-ease, cubic-bezier(0.25, 1, 0.5, 1));
+  --dur-ui: var(--salon-dur-ui, 240ms);
+  --dur-reveal: var(--salon-dur-reveal, 300ms);
+
+  padding-block-end: 48px;
 }
 
 .head {
-  margin-bottom: 2.75rem;
-}
-
-.title {
-  font-family: var(--salon-font-display);
-  font-size: clamp(1.75rem, 1.2rem + 1.6vw, 2.5rem);
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  color: var(--salon-ink);
-  margin: 0;
-}
-
-.standfirst {
-  margin: 0.85rem 0 0;
-  max-width: 46ch;
-  font-family: var(--salon-font-read);
-  font-size: 1rem;
-  line-height: 1.6;
-  /* Spec 1.1 calls --salon-muted 4.4:1 and reserves it for secondary text. This
-     is a standfirst, not body copy — the body of this page is the eleven
-     objects — but the spec's number is also stale: #93A69B on #233226 measures
-     5.04:1, so it clears the 4.5:1 body floor either way. */
-  color: var(--salon-muted);
+  margin-bottom: 48px;
 }
 
 /* --salon-muted, not --salon-subtle. The token table marks subtle as tertiary
@@ -55,13 +49,9 @@
    on the page does. #71857A on #233226 measures 3.30:1, under the 4.5:1 floor;
    #93A69B takes it to 5.04:1. */
 .count {
+  composes: salon-label from global;
   display: block;
-  margin-top: 1.15rem;
-  font-family: var(--salon-font-mono);
-  font-size: 10px;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--salon-muted);
+  margin-top: 16px;
 }
 
 /* --------------------------------------------------------------------------
@@ -89,12 +79,22 @@
 
    Raise it only with that second calculation redone against whatever the column
    width is at the time.
+
+   --cr-px is one DESIGN pixel: the length that measures 1px when the jacket is
+   at its 280px ceiling. Every shadow offset, blur and spread below is written
+   as its design value times this, so the whole shadow stack rescales with the
+   object instead of staying a fixed size on a shrinking sleeve. A shadow that
+   does not scale is the most reliable tell that an object is a picture of a
+   thing rather than a thing.
    -------------------------------------------------------------------------- */
 .crate {
   --cr-jacket: clamp(180px, 40vw, 280px);
+  --cr-px: calc(var(--cr-jacket) / 280);
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(calc(var(--cr-jacket) * 1.5), 1fr));
-  gap: 3.75rem 2.5rem;
+  /* The 40px column gap is load-bearing for the column count in the note
+     above; the 64px row gap is not, and is on the shared scale. */
+  gap: 64px 40px;
   align-items: start;
   list-style: none;
   margin: 0;
@@ -102,8 +102,26 @@
 }
 
 .item {
+  /* The shared entrance, not a local copy of it: `.salon-enter` declares the
+     final state unconditionally and supplies the state to come FROM in an
+     `@starting-style` block, so a browser that ignores the rule — or a build
+     that loses it — shows eleven records rather than an empty grid. */
+  composes: salon-enter from global;
   margin: 0;
 }
+
+/* The stagger index `.salon-enter` reads. Crate.tsx cannot set it inline
+   without a prop it has no reason to carry, and nth-child is the same
+   information: position in the crate. Capped at eight steps (160ms at the
+   20ms token) so the tail is not still arriving after the top has settled. */
+.item:nth-child(2) { --salon-enter-index: 1; }
+.item:nth-child(3) { --salon-enter-index: 2; }
+.item:nth-child(4) { --salon-enter-index: 3; }
+.item:nth-child(5) { --salon-enter-index: 4; }
+.item:nth-child(6) { --salon-enter-index: 5; }
+.item:nth-child(7) { --salon-enter-index: 6; }
+.item:nth-child(8) { --salon-enter-index: 7; }
+.item:nth-child(n + 9) { --salon-enter-index: 8; }
 
 .shot {
   position: relative;
@@ -122,7 +140,7 @@
 
 .link:focus-visible {
   outline: 2px solid var(--salon-accent);
-  outline-offset: 5px;
+  outline-offset: 4px;
 }
 
 .stage {
@@ -159,8 +177,13 @@
        individually guarantees moire, not detail. */
       repeating-radial-gradient(circle at 50% 50%, #0c0c0d 0 2px, #131315 2px 4px),
     radial-gradient(circle at 50% 50%, #17171a 0 33%, #0e0e10 34%, #131316 78%, #0a0a0b 100%);
+  /* Two layers on the shared recipe (y / 2y blur / -y/2 spread), tinted with
+     rgb(6 12 8) — the Salon green driven to its floor — rather than pure black.
+     Composited over the plate the near stop lands almost exactly on #0E1610, so
+     the shadow reads as the room's own dark rather than as a grey wash over it. */
   box-shadow:
-    0 18px 34px -16px rgba(0, 0, 0, 0.9),
+    0 calc(var(--cr-px) * 6) calc(var(--cr-px) * 12) calc(var(--cr-px) * -3) rgba(6, 12, 8, 0.55),
+    0 calc(var(--cr-px) * 18) calc(var(--cr-px) * 36) calc(var(--cr-px) * -9) rgba(6, 12, 8, 0.62),
     inset 0 0 0 1px rgba(255, 255, 255, 0.07);
 }
 
@@ -182,9 +205,21 @@
   box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.35);
 }
 
+/*
+  Both label sizes are FLOORED, not free-scaled. The proportions here are drawn
+  from a real label face, and they hold down to about a 250px jacket; below that
+  the pure ratio walks the catalogue number off the bottom of what a screen can
+  resolve — 0.0333 x 180px is 6.0px, and 0.0197 x 180px is 3.5px, which
+  sub-pixel-renders to a smear in the centre of all eleven discs and reads as a
+  rendering fault rather than as small print.
+
+  8px is spec 3's floor. This type is aria-hidden and the same strings are real
+  text in the meta line below, so the floor is about whether the object looks
+  made, not about whether it can be read.
+*/
 .labelTitle {
   font-family: var(--salon-font-display);
-  font-size: calc(var(--cr-jacket) * 0.0333);
+  font-size: max(8px, calc(var(--cr-jacket) * 0.0333));
   font-weight: 600;
   letter-spacing: 0.1em;
   white-space: nowrap;
@@ -192,9 +227,24 @@
 
 .labelSide {
   font-family: var(--salon-font-mono);
-  font-size: calc(var(--cr-jacket) * 0.0197);
-  letter-spacing: 0.2em;
+  font-size: max(7px, calc(var(--cr-jacket) * 0.0197));
+  /* 0.08em, not 0.2em: at the floored size the wider tracking runs SIDE A and
+     the year past the label's chord and `overflow: hidden` on .label clips it. */
+  letter-spacing: 0.08em;
   white-space: nowrap;
+}
+
+/*
+  --cr-jacket is clamp(180px, 40vw, 280px), so below a 560px viewport the jacket
+  is under 224px and the floored side line no longer fits the chord it sits on.
+  It is decorative print — the year it carries is real text in `.metaFile` — so
+  the small end drops it rather than clipping it. The catalogue number in
+  .labelTitle stays on every size; it is the one mark a label always carries.
+*/
+@media (max-width: 560px) {
+  .labelSide {
+    display: none;
+  }
 }
 
 /* 7.24mm spindle hole, filled with the page ground so it reads as a hole. */
@@ -220,10 +270,22 @@
   overflow: hidden;
   isolation: isolate;
   container-type: inline-size;
+  /*
+    Three layers, geometric offsets 4 / 12 / 30, blur 2x the offset and spread
+    -offset/2, all in --cr-px so the stack rescales with the jacket. Tinted
+    rgb(12 22 16) — the crate's own darkest green — never pure black: a black
+    shadow on a green ground desaturates the ground it falls on and is what
+    makes a rendered object read as pasted onto the page.
+
+    The inset hairline is spec 1.3's rule for a dark ground and stays. It is
+    the second channel of the hover response below, so it is deliberately not
+    folded into the stack.
+  */
   box-shadow:
-    0 26px 44px -20px rgba(0, 0, 0, 0.85),
-    /* Spec 1.3: a drop shadow is invisible on #233226, so an object on the
-       dark ground gets an inset hairline instead. */ inset 0 0 0 1px rgba(221, 238, 255, 0.13);
+    0 calc(var(--cr-px) * 4) calc(var(--cr-px) * 8) calc(var(--cr-px) * -2) rgba(12, 22, 16, 0.24),
+    0 calc(var(--cr-px) * 12) calc(var(--cr-px) * 24) calc(var(--cr-px) * -6) rgba(12, 22, 16, 0.3),
+    0 calc(var(--cr-px) * 30) calc(var(--cr-px) * 60) calc(var(--cr-px) * -15) rgba(12, 22, 16, 0.38),
+    inset 0 0 0 1px var(--salon-edge);
 }
 
 /* --------------------------------------------------------------------------
@@ -296,10 +358,17 @@
   bottom: calc(var(--cr-jacket) * -0.0788);
   height: calc(var(--cr-jacket) * 0.103);
   z-index: 0;
-  background: radial-gradient(ellipse at 46% 40%, rgba(0, 0, 0, 0.62) 0%, rgba(0, 0, 0, 0) 70%);
+  /* Same tint discipline as the sleeve, pushed one stop darker because this is
+     the point of contact and has to bottom out below the plate to read at all.
+     rgb(6 12 8) at 0.7 over --salon-plate #141E17 composites to #0A110C — a
+     shade off --salon-sunken, so the darkest point of the object is the room's
+     own darkest value rather than a hole cut in the page. */
+  background: radial-gradient(ellipse at 46% 40%, rgba(6, 12, 8, 0.7) 0%, rgba(6, 12, 8, 0) 70%);
   filter: blur(calc(var(--cr-jacket) * 0.0212));
   opacity: 0.88;
-  transition: opacity 0.3s ease;
+  transition:
+    opacity var(--dur-ui) var(--ease),
+    transform var(--dur-ui) var(--ease);
 }
 
 /* --------------------------------------------------------------------------
@@ -310,15 +379,25 @@
    range. The sleeve is a picture of print, not readable UI — so anything a
    cover needs to say has to be said here instead.
    -------------------------------------------------------------------------- */
+/*
+  WIDTH IS 100%, i.e. the full 1.5 jackets of `.shot`, and this is the fix for
+  the most visible break on the object. The sleeve is one jacket wide but the
+  disc slides right by a radius and runs to 1.46 jackets, so a caption rule set
+  to `--cr-jacket` spans 68% of what the eye reads as the object and terminates
+  squarely under the face of the disc — a hairline that stops dead mid-object,
+  on all eleven cards. At the shot's own width it rules the whole column, ends
+  clear of the disc, and lines up with its neighbours across the row.
+*/
 .meta {
-  margin-top: 26px;
+  margin-top: 24px;
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: 1rem;
-  width: var(--cr-jacket);
+  gap: 16px;
+  width: 100%;
   border-top: 1px solid var(--salon-line);
-  padding-top: 11px;
+  padding-top: 12px;
+  transition: border-color var(--dur-ui) var(--ease);
 }
 
 .metaTitle {
@@ -327,7 +406,7 @@
   font-weight: 500;
   line-height: 1.25;
   color: var(--salon-ink);
-  transition: color 0.3s ease;
+  transition: color var(--dur-ui) var(--ease);
 }
 
 /* Catalogue number rides with the year so it exists as real text at a readable
@@ -335,21 +414,71 @@
    cover typography, and spec 3's exemption for such marks is conditional on
    exactly this line existing. Do not drop it to make room for anything. */
 .metaFile {
+  composes: salon-label from global;
   flex: none;
-  font-family: var(--salon-font-mono);
-  font-size: 10px;
-  letter-spacing: 0.16em;
-  color: var(--salon-muted);
   white-space: nowrap;
 }
 
-.link:hover .metaTitle {
-  color: var(--salon-accent);
+/* --------------------------------------------------------------------------
+   HOVER / FOCUS
+
+   Five of eleven cards are interactive. The old response was a title colour
+   plus .shadow going 0.88 -> 1 — a 12% change on an already-soft radial
+   gradient, which is not visible in practice, so none of the five announced
+   itself.
+
+   Three channels now, on the shared UI duration and curve:
+
+     ELEVATION  the object rises --salon-lift. .disc and .sleeve move together so the
+                occlusion between them is untouched; .shadow stays planted on
+                the plate, which is what makes the move read as height rather
+                than as the whole card sliding.
+     SURFACE    the inset hairline roughly doubles and the shadow stack deepens
+                to the next step of the same geometric series.
+     CONTACT    the contact shadow spreads and settles, the way a real one does
+                as the object it belongs to lifts away from it.
+
+   --salon-lift is 4px, the bottom of the sanctioned travel range. On a 280px
+   object that is 1.4% of its height: felt, not watched. Under reduced motion
+   the token is 0px at source, so the lift stops rather than merely snapping.
+   -------------------------------------------------------------------------- */
+.disc,
+.sleeve {
+  transition:
+    transform var(--dur-ui) var(--ease),
+    box-shadow var(--dur-ui) var(--ease);
+}
+
+.link:hover .disc,
+.link:focus-visible .disc,
+.link:hover .sleeve,
+.link:focus-visible .sleeve {
+  transform: translateY(calc(-1 * var(--salon-lift, 4px)));
+}
+
+.link:hover .sleeve,
+.link:focus-visible .sleeve {
+  box-shadow:
+    0 calc(var(--cr-px) * 6) calc(var(--cr-px) * 12) calc(var(--cr-px) * -3) rgba(12, 22, 16, 0.3),
+    0 calc(var(--cr-px) * 18) calc(var(--cr-px) * 36) calc(var(--cr-px) * -9) rgba(12, 22, 16, 0.36),
+    0 calc(var(--cr-px) * 44) calc(var(--cr-px) * 88) calc(var(--cr-px) * -22) rgba(12, 22, 16, 0.44),
+    inset 0 0 0 1px var(--salon-edge-strong);
 }
 
 .link:hover .shadow,
 .link:focus-visible .shadow {
   opacity: 1;
+  transform: translateY(2px) scaleX(1.06);
+}
+
+.link:hover .metaTitle,
+.link:focus-visible .metaTitle {
+  color: var(--salon-accent);
+}
+
+.link:hover .meta,
+.link:focus-visible .meta {
+  border-color: var(--salon-accent);
 }
 
 /* Second destination for the one project that has two. Sits OUTSIDE the
@@ -357,22 +486,21 @@
 .extras {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.75rem;
-  margin: 0.65rem 0 0;
-  width: var(--cr-jacket);
+  gap: 12px;
+  margin: 12px 0 0;
+  /* Same width as .meta above, for the same reason: these range against the
+     caption rule, not against the sleeve. */
+  width: 100%;
   padding: 0;
   list-style: none;
 }
 
 .extra {
-  font-family: var(--salon-font-mono);
-  font-size: 10px;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
+  composes: salon-label from global;
   color: var(--salon-accent);
   text-decoration: none;
   border-bottom: 1px solid transparent;
-  transition: border-color 0.3s ease;
+  transition: border-color var(--dur-ui) var(--ease);
 }
 
 .extra:hover,

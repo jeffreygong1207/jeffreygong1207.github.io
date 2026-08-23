@@ -16,6 +16,16 @@ interface Asset {
   postTitle: string | null
 }
 
+// 1.3: inset hairline, not a drop shadow. Tailwind utilities rather than the
+// unlayered `.salon-plate` class, because that class beats a `hover:` variant on
+// the same element and every tile here is a link target.
+//
+// Two channels: the face lifts to --salon-raised and the hairline goes 0.14 ->
+// 0.30 at the same time. `focus-within` as well as `hover`, because the anchor
+// that takes focus is inside the tile, not the tile itself.
+const TILE =
+  'bg-salon-plate shadow-[inset_0_0_0_1px_rgba(221,238,255,0.14)] transition-[background-color,box-shadow] duration-[240ms] ease-[cubic-bezier(0.25,1,0.5,1)] hover:bg-salon-raised hover:shadow-[inset_0_0_0_1px_rgba(221,238,255,0.30)] focus-within:bg-salon-raised focus-within:shadow-[inset_0_0_0_1px_rgba(221,238,255,0.30)]'
+
 function formatBytes(bytes: number): string {
   if (!bytes) return '—'
   const units = ['B', 'KB', 'MB']
@@ -64,12 +74,7 @@ export default async function MediaPage() {
   return (
     <>
       <div className="mb-8">
-        <h1
-          className="text-[30px] font-normal leading-tight tracking-[-0.018em] text-salon-ink"
-          style={{ fontFamily: 'var(--salon-font-read)' }}
-        >
-          Media
-        </h1>
+        <h1 className="salon-h1">Media</h1>
         <p className="mt-1 text-sm text-salon-muted">
           {assets.length === 0
             ? 'Images uploaded from the editor appear here.'
@@ -87,14 +92,15 @@ export default async function MediaPage() {
         <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
           {assets.map((asset) => (
             // §1.2: the thumbnail sits on a plate — no border, no radius, no
-            // drop shadow. `.salon-plate` carries the §1.3 inset hairline,
-            // which is what an edge looks like on a dark ground.
-            <li key={asset.path} className="salon-plate">
+            // drop shadow. `TILE` carries the §1.3 inset hairline, which is what
+            // an edge looks like on a dark ground, plus the hover and focus
+            // states `.salon-plate` cannot express.
+            <li key={asset.path} className={TILE}>
               <a
                 href={asset.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="block focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-salon-accent"
+                className="salon-focus block"
               >
                 {/* The image is the anchor's only visible content, so without
                     this the link computes an empty accessible name (WCAG F89).
@@ -102,7 +108,7 @@ export default async function MediaPage() {
                     and say it leaves the tab — the img stays alt="" so the name
                     is not announced twice. */}
                 <span className="sr-only">
-                  {asset.name} &mdash; {asset.postTitle ?? 'orphaned upload'}. Full-size image,
+                  {asset.name} &mdash; {asset.postTitle ?? 'not used in a post'}. Full-size image,
                   opens in a new tab.
                 </span>
                 <div className="aspect-[4/3] bg-salon-sunken">
@@ -119,15 +125,18 @@ export default async function MediaPage() {
                 {asset.postTitle ? (
                   <Link
                     href={`/admin/posts/${asset.postId}`}
-                    className="block truncate text-xs font-medium text-salon-ink transition-colors hover:text-salon-accent"
+                    className="salon-focus block truncate text-xs font-medium text-salon-ink"
                   >
                     {asset.postTitle}
                   </Link>
                 ) : (
                   // The post was deleted but its objects were not: storage has
-                  // no foreign key to posts, so nothing cascades.
+                  // no foreign key to posts, so nothing cascades. Said as what
+                  // the reader can see about the file, not as the database state
+                  // that produced it — a screen reader reads this line as the
+                  // image's description.
                   <span className="block truncate text-xs font-medium text-salon-muted">
-                    Orphaned
+                    Not used in a post
                   </span>
                 )}
                 <p

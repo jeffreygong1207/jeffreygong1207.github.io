@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { SHELVES, TOTAL_VOLUMES } from '@/lib/coursework'
 import { EXPERIENCE_ROLES } from '@/lib/experience'
 import { PROJECTS } from '@/lib/projects'
+import { AUTHOR_TZ } from '@/app/(staff)/admin/posts/page'
 import type { Post, PostStatus } from '@/lib/types'
 
 type Row = Pick<
@@ -11,10 +12,17 @@ type Row = Pick<
 >
 
 // 1.3: a drop shadow is invisible on #233226, so an object on the dark ground
-// gets an inset hairline instead. Written inline rather than through the
-// `.salon-plate` class because that rule is unlayered and would beat a Tailwind
-// `hover:bg-*` on the same element — the entrances need a hover state.
-const PLATE_RING = { boxShadow: 'inset 0 0 0 1px rgba(221, 238, 255, 0.14)' }
+// gets an inset hairline instead. Written as Tailwind utilities rather than the
+// unlayered `.salon-plate` class or an inline style, because both of those beat
+// a `hover:` variant on the same element and these plates need a hover state.
+//
+// Two channels on hover, not one: `bg-salon-raised` alone measures ~1.5:1
+// against the plate, which is a nudge, not a state change. The hairline goes
+// from 0.14 to 0.30 alpha at the same time, so the edge of the object brightens
+// as well as its face.
+const PLATE = 'bg-salon-plate shadow-[inset_0_0_0_1px_rgba(221,238,255,0.14)]'
+const PLATE_INTERACTIVE =
+  'bg-salon-plate shadow-[inset_0_0_0_1px_rgba(221,238,255,0.14)] transition-[background-color,box-shadow] duration-[240ms] ease-[cubic-bezier(0.25,1,0.5,1)] hover:bg-salon-raised hover:shadow-[inset_0_0_0_1px_rgba(221,238,255,0.30)]'
 
 const DISPLAY = { fontFamily: 'var(--salon-font-display)' }
 const MONO = { fontFamily: 'var(--salon-font-mono)' }
@@ -41,7 +49,10 @@ export default async function Cabinet() {
   // Every draft, not "the draft". How many there are today is data, not a rule.
   const drafts = all.filter((p) => p.status === 'draft')
 
-  const entrances: { href: string; name: string; note: string }[] = [
+  // Navigation copy names what is counted and nothing else. It must survive a
+  // redesign of the surface it points at, so no sleeves, crates or slates here:
+  // rename the drawing and these lines still read true.
+  const sections: { href: string; name: string; note: string }[] = [
     {
       href: '/admin/posts',
       name: 'Posts',
@@ -59,25 +70,20 @@ export default async function Cabinet() {
       name: 'Coursework',
       note: `${TOTAL_VOLUMES} volumes across ${SHELVES.length} shelves`,
     },
-    { href: '/admin/projects', name: 'Projects', note: `${PROJECTS.length} sleeves in the crate` },
+    { href: '/admin/projects', name: 'Projects', note: plural(PROJECTS.length, 'project') },
     {
       href: '/admin/experience',
       name: 'Experience',
-      note: `${plural(EXPERIENCE_ROLES.length, 'role')} on the slate`,
+      note: plural(EXPERIENCE_ROLES.length, 'role'),
     },
   ]
 
   return (
     <>
       <header className="mb-10">
-        <h1
-          className="text-[26px] uppercase leading-none tracking-[0.2em] text-salon-ink md:text-[30px]"
-          style={DISPLAY}
-        >
-          The Cabinet
-        </h1>
+        <h1 className="salon-h1">The Cabinet</h1>
         <p className="mt-3 text-[11px] uppercase tracking-[0.2em] text-salon-muted" style={MONO}>
-          {plural(all.length, 'piece')} in the room
+          {plural(all.length, 'post')}
         </p>
       </header>
 
@@ -90,18 +96,21 @@ export default async function Cabinet() {
           className="mb-4 text-[11px] uppercase tracking-[0.24em] text-salon-muted"
           style={MONO}
         >
-          Entrances
+          Sections
         </h2>
 
         {/* 1.2: objects sit on a plate 1-4% off the page, not in a bordered
-            card. No border, no radius, no drop shadow. */}
-        <ul className="grid gap-3 sm:grid-cols-2">
-          {entrances.map((e, i) => (
+            card. No border, no radius, no drop shadow.
+
+            One column at every width. Five cards in `sm:grid-cols-2` render
+            2+2+1 and leave a card-sized hole at the bottom right of the first
+            screen; a nav list of five reads down the page anyway. */}
+        <ul className="grid gap-3">
+          {sections.map((e, i) => (
             <li key={e.href}>
               <Link
                 href={e.href}
-                style={PLATE_RING}
-                className="group flex h-full items-start gap-4 bg-salon-plate px-5 py-5 transition-colors hover:bg-salon-raised focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-salon-accent"
+                className={`group flex h-full items-start gap-4 px-5 py-5 salon-focus ${PLATE_INTERACTIVE}`}
               >
                 <span
                   aria-hidden="true"
@@ -125,7 +134,7 @@ export default async function Cabinet() {
 
                 <span
                   aria-hidden="true"
-                  className="pt-0.5 text-salon-accent opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100"
+                  className="pt-0.5 text-salon-accent opacity-0 transition-opacity duration-[240ms] ease-[cubic-bezier(0.25,1,0.5,1)] group-hover:opacity-100 group-focus-visible:opacity-100"
                 >
                   &rarr;
                 </span>
@@ -144,23 +153,23 @@ export default async function Cabinet() {
         </h2>
 
         {drafts.length === 0 ? (
-          <p style={PLATE_RING} className="bg-salon-plate px-5 py-8 text-sm text-salon-muted">
+          <p className={`px-5 py-8 text-sm text-salon-muted ${PLATE}`}>
             Nothing in progress.{' '}
             <Link
               href="/admin/posts"
-              className="text-salon-accent underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-salon-accent"
+              className="salon-focus text-salon-accent underline underline-offset-4"
             >
               Start one
             </Link>
             .
           </p>
         ) : (
-          <ul style={PLATE_RING} className="bg-salon-plate">
+          <ul className={PLATE}>
             {drafts.map((post, i) => (
               <li key={post.id} className={i > 0 ? 'border-t border-salon-line' : ''}>
                 <Link
                   href={`/admin/posts/${post.id}`}
-                  className="flex items-baseline gap-4 px-5 py-4 transition-colors hover:bg-salon-raised focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-salon-accent"
+                  className="salon-focus flex items-baseline gap-4 px-5 py-4 transition-[background-color,box-shadow] duration-[240ms] ease-[cubic-bezier(0.25,1,0.5,1)] hover:bg-salon-raised hover:shadow-[inset_2px_0_0_0_rgba(221,238,255,0.30)]"
                 >
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-[15px] text-salon-ink">{post.title}</span>
@@ -172,9 +181,14 @@ export default async function Cabinet() {
                   </span>
                   <span className="shrink-0 text-[11px] tabular-nums text-salon-muted" style={MONO}>
                     {post.reading_minutes} min ·{' '}
+                    {/* AUTHOR_TZ, not the runtime's zone. Vercel renders in UTC,
+                        so an unzoned format here and the zoned one on
+                        /admin/posts disagree about the date for seven hours a
+                        day — the same post, two dates, on two pages. */}
                     {new Date(post.updated_at).toLocaleDateString('en-US', {
                       month: 'short',
                       day: 'numeric',
+                      timeZone: AUTHOR_TZ,
                     })}
                   </span>
                 </Link>

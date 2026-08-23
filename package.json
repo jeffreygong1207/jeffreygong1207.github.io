@@ -5,11 +5,17 @@
   "main": "index.js",
   "scripts": {
     "dev": "next dev",
+    "prebuild": "npm run check:copy",
     "build": "next build",
+    "postbuild": "npm run check:tokens",
     "export": "next build",
     "start": "next start",
     "lint": "next lint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "check:copy": "node scripts/check-staff-copy.mjs",
+    "check:tokens": "node scripts/verify-tokens.mjs",
+    "check:live": "node scripts/verify-tokens.mjs --live",
+    "check": "npm run check:copy && npm run typecheck"
   },
   "repository": {
     "type": "git",

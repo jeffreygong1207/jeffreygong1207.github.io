@@ -96,8 +96,22 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       <div
         className={`salon-shell flex min-h-screen flex-col md:flex-row ${FONT_VARS}`}
       >
+        {/* WCAG 2.4.1. The sidebar puts eight controls ahead of the content on
+            every staff page and there was no way past them. Parked off-screen
+            with a transform rather than `sr-only`, so it is a real element the
+            whole time: no clip-path to undo, and nothing to restore if a rule
+            never arrives. z-70 clears the grain overlay, which sits at 60. */}
+        <a
+          href="#salon-main"
+          className="salon-plate salon-focus fixed left-4 top-4 z-[70] -translate-y-[200%] whitespace-nowrap px-4 py-2 text-sm text-salon-ink focus:translate-y-0"
+        >
+          Skip to content
+        </a>
         <StaffSidebar email={user.email ?? ''} />
-        <main className="min-w-0 flex-1">
+        {/* tabIndex -1 so the skip link has somewhere to land: without it the
+            hash moves the viewport but leaves focus where it was, and the next
+            Tab goes straight back into the sidebar. */}
+        <main id="salon-main" tabIndex={-1} className="min-w-0 flex-1">
           <div className="salon-column">{children}</div>
         </main>
       </div>

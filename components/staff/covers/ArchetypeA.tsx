@@ -16,7 +16,13 @@ export function ArchetypeA({ ink, year, glyph }: ArtProps & { glyph: string }) {
     <>
       {/* Cover furniture, not content: 1.6cqw is 4.48px at the 280px jacket ceiling and
           2.88px at the 180px floor, under the 8px floor in spec 3 at every size.
-          The year is real text at 10px in `.metaFile` under the shot. */}
+          The year is real text at 10px in `.metaFile` under the shot.
+
+          The year and nothing else. This slot previously read 'HIS {year} STUDIO
+          PROJECT' — a truncated string asserting a category that is in no
+          project's data. An archetype receives whatever the catalogue hands it,
+          so the only things it may print are the ones true of every project it
+          can receive: the year and the catalogue number. */}
       <div
         aria-hidden="true"
         style={{
@@ -32,7 +38,7 @@ export function ArchetypeA({ ink, year, glyph }: ArtProps & { glyph: string }) {
           opacity: 0.8,
         }}
       >
-        HIS {year} STUDIO PROJECT
+        {year}
       </div>
       <div
         aria-hidden="true"
