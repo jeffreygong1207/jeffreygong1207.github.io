@@ -119,7 +119,11 @@ export const CLOTH = {
   UGBA: '#6B5434',
   ECON: '#7A5A1E',
   DATA: '#1C3B3E',
-  PHYS: '#5A3159',
+  /* Was #5A3159: LAB hue 327.4 with C* 30.2, which is pink-magenta, not
+     aubergine, and the most chromatic dark in the set. #49395A holds L* at 27.0
+     so nothing else on the spine retunes, drops C* to 22.5, and lands at hue
+     310.2 -- inside the aubergine band. */
+  PHYS: '#49395A',
   HUM: '#3A2440',
   ELENG: '#5A2F22',
   MATH: '#1F3A2E',

@@ -312,10 +312,14 @@
     the card that these are two objects and not one printed picture.
   */
   box-shadow:
-    0 calc(var(--cr-px) * (6 + 8 * var(--open))) calc(var(--cr-px) * (12 + 14 * var(--open)))
-      calc(var(--cr-px) * -3) rgba(6, 12, 8, calc(0.55 - 0.13 * var(--open))),
-    0 calc(var(--cr-px) * (18 + 16 * var(--open))) calc(var(--cr-px) * (36 + 32 * var(--open)))
-      calc(var(--cr-px) * -9) rgba(6, 12, 8, calc(0.62 - 0.14 * var(--open))),
+    0 calc(var(--cr-px) * (2 + 2 * var(--open))) calc(var(--cr-px) * (3 + 3 * var(--open))) 0
+      rgba(6, 12, 8, calc(0.68 - 0.26 * var(--open))),
+    calc(var(--cr-px) * 4) calc(var(--cr-px) * (6 + 8 * var(--open)))
+      calc(var(--cr-px) * (12 + 14 * var(--open))) calc(var(--cr-px) * -3)
+      rgba(6, 12, 8, calc(0.4 - 0.1 * var(--open))),
+    calc(var(--cr-px) * 6) calc(var(--cr-px) * (18 + 16 * var(--open)))
+      calc(var(--cr-px) * (36 + 32 * var(--open))) calc(var(--cr-px) * -9)
+      rgba(6, 12, 8, calc(0.26 - 0.06 * var(--open))),
     inset 0 0 0 1px rgba(255, 255, 255, 0.07);
 }
 
@@ -331,7 +335,13 @@
     /* ONE repeating gradient for the entire groove field. Real density runs to
        260 grooves per inch, which is 7.7 grooves per pixel here — drawing them
        individually guarantees moire, not detail. */
-    repeating-radial-gradient(circle at 50% 50%, #0c0c0d 0 2px, #131315 2px 4px),
+    radial-gradient(
+      circle at 50% 50%,
+      transparent 0 88%,
+      rgba(255, 255, 255, 0.1) 97%,
+      rgba(255, 255, 255, 0.16) 100%
+    ),
+    repeating-radial-gradient(circle at 50% 50%, #0d0d0e 0 1.5px, #101012 1.5px 3px),
     radial-gradient(circle at 50% 50%, #17171a 0 33%, #0e0e10 34%, #131316 78%, #0a0a0b 100%);
 }
 
@@ -391,11 +401,11 @@
     ),
     linear-gradient(
       114deg,
-      rgba(255, 255, 255, 0) 48%,
-      rgba(255, 255, 255, 0.16) 60%,
-      rgba(255, 255, 255, 0.3) 65.3%,
-      rgba(255, 255, 255, 0.13) 71.5%,
-      rgba(255, 255, 255, 0) 83%
+      rgba(255, 255, 255, 0) 26%,
+      rgba(255, 255, 255, 0.06) 31%,
+      rgba(255, 255, 255, 0.62) 34.2%,
+      rgba(255, 255, 255, 0.06) 37.4%,
+      rgba(255, 255, 255, 0) 43%
     );
 }
 
@@ -501,9 +511,13 @@
     deliberately not folded into the stack.
   */
   box-shadow:
-    0 calc(var(--cr-px) * 4) calc(var(--cr-px) * 8) calc(var(--cr-px) * -2) rgba(12, 22, 16, 0.24),
-    0 calc(var(--cr-px) * 12) calc(var(--cr-px) * 24) calc(var(--cr-px) * -6) rgba(12, 22, 16, 0.3),
-    0 calc(var(--cr-px) * 30) calc(var(--cr-px) * 60) calc(var(--cr-px) * -15) rgba(12, 22, 16, 0.38),
+    0 calc(var(--cr-px) * 1) calc(var(--cr-px) * 2) 0 rgba(12, 22, 16, 0.55),
+    calc(var(--cr-px) * 3) calc(var(--cr-px) * 4) calc(var(--cr-px) * 8) calc(var(--cr-px) * -2)
+      rgba(12, 22, 16, 0.34),
+    calc(var(--cr-px) * 8) calc(var(--cr-px) * 12) calc(var(--cr-px) * 24) calc(var(--cr-px) * -6)
+      rgba(12, 22, 16, 0.24),
+    calc(var(--cr-px) * 9) calc(var(--cr-px) * 30) calc(var(--cr-px) * 60) calc(var(--cr-px) * -15)
+      rgba(12, 22, 16, 0.16),
     inset 0 0 0 1px var(--salon-edge);
   transition: box-shadow var(--dur-ui) var(--ease);
 }
@@ -547,7 +561,7 @@
   top: 0;
   bottom: 0;
   right: 0;
-  width: 5px;
+  width: calc(var(--cr-px) * 5);
   z-index: 7;
   background: linear-gradient(90deg, rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.24));
 }
@@ -566,8 +580,9 @@
   pointer-events: none;
   opacity: 0.16;
   box-shadow:
-    inset 0 0 0 1px rgba(255, 255, 255, 0.5),
-    0 0 0 1px rgba(0, 0, 0, 0.3);
+    inset 1px 1px 0 0 rgba(255, 255, 255, 0.55),
+    inset -1px -1px 0 0 rgba(0, 0, 0, 0.35),
+    0 0 0 1px rgba(0, 0, 0, 0.12);
 }
 
 /* Contact shadow, under everything. Scaled off the jacket so it tracks size.
@@ -585,7 +600,7 @@
      rgb(6 12 8) at 0.7 over --salon-plate #141E17 composites to #0A110C — a
      shade off --salon-sunken, so the darkest point of the object is the room's
      own darkest value rather than a hole cut in the page. */
-  background: radial-gradient(ellipse at 46% 40%, rgba(6, 12, 8, 0.7) 0%, rgba(6, 12, 8, 0) 70%);
+  background: radial-gradient(ellipse at 46% 40%, rgba(6, 12, 8, 0.55) 0%, rgba(6, 12, 8, 0) 70%);
   filter: blur(calc(var(--cr-jacket) * 0.0212));
   opacity: 0.88;
   --shadow-dy: 0px;
@@ -688,9 +703,13 @@
 .face:focus-visible .sleeve,
 .record[open] .sleeve {
   box-shadow:
-    0 calc(var(--cr-px) * 6) calc(var(--cr-px) * 12) calc(var(--cr-px) * -3) rgba(12, 22, 16, 0.3),
-    0 calc(var(--cr-px) * 18) calc(var(--cr-px) * 36) calc(var(--cr-px) * -9) rgba(12, 22, 16, 0.36),
-    0 calc(var(--cr-px) * 44) calc(var(--cr-px) * 88) calc(var(--cr-px) * -22) rgba(12, 22, 16, 0.44),
+    0 calc(var(--cr-px) * 1) calc(var(--cr-px) * 2) 0 rgba(12, 22, 16, 0.48),
+    calc(var(--cr-px) * 4) calc(var(--cr-px) * 6) calc(var(--cr-px) * 12) calc(var(--cr-px) * -3)
+      rgba(12, 22, 16, 0.36),
+    calc(var(--cr-px) * 12) calc(var(--cr-px) * 18) calc(var(--cr-px) * 36) calc(var(--cr-px) * -9)
+      rgba(12, 22, 16, 0.26),
+    calc(var(--cr-px) * 14) calc(var(--cr-px) * 44) calc(var(--cr-px) * 88) calc(var(--cr-px) * -22)
+      rgba(12, 22, 16, 0.18),
     inset 0 0 0 1px var(--salon-edge-strong);
 }
 

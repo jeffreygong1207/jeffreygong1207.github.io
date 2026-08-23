@@ -94,7 +94,7 @@
   width: 30px;
   height: 3px;
   margin-top: 0.55em;
-  background: repeating-linear-gradient(90deg, #f2dc9e 0 1.5px, #6b5324 1.5px 3px);
+  background: repeating-linear-gradient(90deg, #f2dc9e 0 1px, #b08a45 1px 1.6px, #6b5324 1.6px 2px);
   opacity: 0.85;
 }
 
@@ -198,10 +198,11 @@
   background: #1a2620;
   box-shadow:
     inset 0 0 0 1px rgba(221, 238, 255, 0.07),
-    inset 0 26px 40px -22px rgba(0, 0, 0, 0.85),
-    0 6px 12px -3px rgba(19, 28, 24, 0.34),
-    0 18px 36px -9px rgba(19, 28, 24, 0.4),
-    0 48px 96px -24px rgba(19, 28, 24, 0.46);
+    inset 0 26px 40px -22px rgba(11, 18, 14, 0.85),
+    0 2px 3px -1px rgba(19, 28, 24, 0.62),
+    4px 6px 12px -3px rgba(19, 28, 24, 0.4),
+    12px 18px 36px -9px rgba(19, 28, 24, 0.26),
+    14px 48px 96px -24px rgba(19, 28, 24, 0.18);
   transform: rotateX(4deg) rotateY(-21deg);
   transform-style: preserve-3d;
 }
@@ -274,9 +275,10 @@
   background: linear-gradient(#5a6b5e, #26332a);
   box-shadow:
     inset 0 0 0 1px rgba(221, 238, 255, 0.1),
-    0 4px 8px -2px rgba(19, 28, 24, 0.5),
-    0 10px 20px -5px rgba(19, 28, 24, 0.52),
-    0 22px 44px -11px rgba(19, 28, 24, 0.58);
+    0 1px 2px 0 rgba(19, 28, 24, 0.66),
+    3px 4px 8px -2px rgba(19, 28, 24, 0.44),
+    7px 10px 20px -5px rgba(19, 28, 24, 0.3),
+    7px 22px 44px -11px rgba(19, 28, 24, 0.2);
 }
 
 /* The shared mono label, not a local one. This is the shelf's visible text AND
@@ -348,8 +350,8 @@
   inset: 0;
   border-radius: 2px;
   background-image:
-    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.02) 0 0.5px, rgba(0, 0, 0, 0.02) 0.5px 1px),
-    repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.03) 0 0.5px, rgba(255, 255, 255, 0.012) 0.5px 1px),
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.01) 0 1.5px, rgba(0, 0, 0, 0.01) 1.5px 3px),
+    repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.015) 0 1.5px, rgba(255, 255, 255, 0.006) 1.5px 3px),
     linear-gradient(
       90deg,
       rgba(255, 255, 255, 0.066) 0%,
@@ -370,16 +372,17 @@
       rgba(0, 0, 0, 0.123) 100%
     );
   background-color: var(--cloth);
-  background-position: var(--phase) var(--phase), 0 0, 0 0;
+  background-position: var(--phase) 0, 0 var(--phase), 0 0;
   /* Rule 11: dye-lot drift, hue ±5° and brightness ±8%. */
   filter: hue-rotate(var(--drift)) brightness(var(--val));
   /* Rule 8: asymmetric micro-bevel. Four equal insets read as a border, so the
      head is bright, the tail dark, and the two sides weaker than either. */
   box-shadow:
-    inset 0 calc(-1 * var(--ao-y)) var(--ao-blur) calc(-1 * var(--ao-spread)) rgba(0, 0, 0, 0.55),
+    inset 0 -1px 0 0 rgba(0, 0, 0, 0.78),
+    inset 0 -3px 3px -1px rgba(0, 0, 0, 0.5),
+    inset 0 calc(-1 * var(--ao-y)) var(--ao-blur) calc(-1 * var(--ao-spread)) rgba(0, 0, 0, 0.34),
     inset 0 1px 0 rgba(255, 255, 255, 0.34),
     inset 1px 0 0 rgba(255, 255, 255, 0.16),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.42),
     inset -1px 0 0 rgba(0, 0, 0, 0.26),
     inset 0 0 6px rgba(0, 0, 0, 0.14);
 }
@@ -403,7 +406,7 @@
 
 .hingeRight {
   right: var(--hinge-in);
-  background: linear-gradient(90deg, rgba(255, 255, 255, 0.05), rgba(0, 0, 0, 0.24) 40%, rgba(0, 0, 0, 0.66));
+  background: linear-gradient(90deg, rgba(0, 0, 0, 0.52), rgba(0, 0, 0, 0.18) 60%, rgba(255, 255, 255, 0.05));
 }
 
 /* Rule 9, part one of three: the ambient-occlusion wedge in the seam, falling
@@ -448,7 +451,7 @@
   left: var(--headband-in);
   width: var(--headband-w);
   height: 3px;
-  background: repeating-linear-gradient(90deg, #c8bba0 0 1.5px, #6e5f49 1.5px 3px);
+  background: repeating-linear-gradient(90deg, #c8bba0 0 1px, #8d7d63 1px 1.6px, #6e5f49 1.6px 2px);
   opacity: 0.85;
 }
 

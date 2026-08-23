@@ -201,7 +201,7 @@ function spineVars(volume: Volume): React.CSSProperties {
   // Rule 11. Dye lot: hue ±5°, brightness ±8%, weave phase decorrelated per book.
   const drift = ((dyeIndex * 53) % 11) - 5
   const val = 1 + (((dyeIndex * 29) % 9) - 4) * 0.02
-  const phase = (dyeIndex * 37) % 11
+  const phase = ((dyeIndex * 37) % 11) / 11
 
   return {
     '--w': `${w}px`,
@@ -210,7 +210,7 @@ function spineVars(volume: Volume): React.CSSProperties {
     '--cloth': cloth,
     '--drift': `${drift}deg`,
     '--val': val.toFixed(3),
-    '--phase': `${phase}px`,
+    '--phase': `${phase.toFixed(3)}px`,
     '--ao-y': px0(h * 0.04),
     '--ao-blur': px0(h * 0.05),
     '--ao-spread': px0(h * 0.02),
@@ -230,7 +230,7 @@ function spineVars(volume: Volume): React.CSSProperties {
     '--code-fs': px1(codeFs),
     '--track': track,
     '--foil': foil,
-    '--foil-grad': `linear-gradient(96deg, ${foilLow} 0%, ${foil} 26%, ${foilTop} 46%, ${foil} 62%, ${foilLow} 100%)`,
+    '--foil-grad': `linear-gradient(96deg, ${foilLow} 0%, ${foil} 26%, ${foilTop} 33%, ${foil} 62%, ${foilLow} 100%)`,
   } as React.CSSProperties
 }
 
