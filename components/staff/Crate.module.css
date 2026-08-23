@@ -6,12 +6,23 @@
    a 301.6mm disc in a 314.3mm jacket is 0.9596, and rounding it to 0.96 is
    visible as a hairline of disc peeping past the sleeve's top edge.
 
-   ZERO ROTATION. No transform, no rotateY, no perspective anywhere in this
-   file. An LP jacket spine is 1.0% of the face — about 3px at any render size,
-   which the eye reads as a border artifact rather than as depth. Depth here is
-   occlusion (disc behind sleeve) plus the one specular sweep (.lam). The only
-   transforms present are 2D translate(-50%,-50%) centring on the disc label,
-   which is not a pose.
+   FLAT. No rotateY, no perspective, no `transform-style: preserve-3d` anywhere
+   in this file. An LP jacket spine is 1.0% of the face — about 3px at any
+   render size, which the eye reads as a border artifact rather than as depth.
+   Depth here is occlusion (disc behind sleeve) plus one specular sweep per
+   surface. The transforms that do exist are all 2D: the disc's pose as it
+   leaves the jacket, the counter-pose that pins its highlight to page space,
+   the 33 1/3 rpm rotation it pays once it has landed, and the
+   translate(-50%,-50%) centring on the label. None of them is a 3D pose, so
+   the sleeve keeps `overflow: hidden` and `isolation: isolate`.
+
+   THE OPEN STATE. Each packshot is a Vitrine — a native <details>. Everything
+   that moves is derived from `--vitrine-open`, the 0 -> 1 scalar the primitive
+   publishes and interpolates; this file writes no keyframe for the travel and
+   reads no state class. See the header of components/staff/Vitrine.tsx for the
+   contract. `--open` below re-reads that scalar with a state-aware fallback, so
+   a build that loses the registration still opens the record rather than
+   pinning it shut or leaving it permanently pulled out.
 
    app/globals.css is frozen after the foundation commit, so all of this is
    module-scoped. Salon tokens are read as `var(--salon-*)` — NEVER
@@ -36,7 +47,34 @@
   --dur-ui: var(--salon-dur-ui, 240ms);
   --dur-reveal: var(--salon-dur-reveal, 300ms);
 
+  /* --cr-jacket is the ONE size input for the whole surface; see the note on
+     .crate below for why the 280px ceiling is where it is. It is declared here
+     rather than on .crate only so the clip margin under it can be written as a
+     fraction of the object it has to make room for. */
+  --cr-jacket: clamp(180px, 40vw, 280px);
+  --cr-px: calc(var(--cr-jacket) / 280);
+
   padding-block-end: 48px;
+
+  /*
+    ROOM FOR THE TRAVEL. An opened record ends 0.4596 jackets — 128.7px at the
+    ceiling — past the right edge of its own column. In the right-hand column
+    that is past the 64rem measure as well, and on a viewport between about
+    960px and 1140px it is past the viewport: a horizontal scrollbar on a page
+    that has not gained a single column of content.
+
+    `clip` and not `hidden`: hidden would make this a scroll container, and one
+    with `overflow-y: visible` coerced to `auto` — a second scrollbar and a
+    trapped page. `clip` creates no scroll container at all, so nothing here
+    can scroll and nothing propagates to the viewport, and `overflow-y` is left
+    as specified. The clip margin then hands back exactly the travel distance,
+    so the disc paints out over the empty ground beside the measure the way it
+    is meant to. Where `overflow-clip-margin` is unsupported the margin is zero
+    and the disc is cropped at the column edge — smaller, never broken.
+  */
+  overflow-x: clip;
+  overflow-y: visible;
+  overflow-clip-margin: calc(var(--cr-jacket) * 0.5);
 }
 
 .head {
@@ -55,11 +93,11 @@
 }
 
 /* --------------------------------------------------------------------------
-   The crate itself. --cr-jacket is the ONE size input: everything else is a
-   multiple of it, so the whole grid rescales from this line. Each shot is
-   1.5x the jacket wide because the disc slides right by one jacket radius and
-   is itself 0.9596 wide (0.5 + 0.9596 = 1.46), and that overhang must not
-   collide with the neighbouring column.
+   The crate itself. --cr-jacket (declared on .page above) is the ONE size
+   input: everything else is a multiple of it, so the whole grid rescales from
+   that line. Each shot is 1.5x the jacket wide because the disc sits one
+   jacket radius to the right and is itself 0.9596 wide (0.5 + 0.9596 = 1.46),
+   and that overhang must not collide with the neighbouring column at rest.
 
    The 280px ceiling is deliberate and was checked against both constraints
    before being left alone. design/label.mjs draws at 330px, and every cqw on a
@@ -88,70 +126,159 @@
    thing rather than a thing.
    -------------------------------------------------------------------------- */
 .crate {
-  --cr-jacket: clamp(180px, 40vw, 280px);
-  --cr-px: calc(var(--cr-jacket) / 280);
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(calc(var(--cr-jacket) * 1.5), 1fr));
   /* The 40px column gap is load-bearing for the column count in the note
      above; the 64px row gap is not, and is on the shared scale. */
   gap: 64px 40px;
+  /* An opened card grows its own grid row. `start` keeps its neighbours where
+     they were instead of stretching them to match — the row below reflows, and
+     that is what an in-place disclosure looks like. */
   align-items: start;
   list-style: none;
   margin: 0;
   padding: 0;
 }
 
+/*
+  THE ENTRANCE, declared here and not composed from a shared class. The final
+  state is the plain unconditional declaration; the state to come FROM lives in
+  an `@starting-style` inside `prefers-reduced-motion: no-preference`. Every
+  failure — sheet dropped, `@starting-style` unsupported, reduced motion — then
+  resolves to eleven visible records rather than an empty grid.
+*/
 .item {
-  /* The shared entrance, not a local copy of it: `.salon-enter` declares the
-     final state unconditionally and supplies the state to come FROM in an
-     `@starting-style` block, so a browser that ignores the rule — or a build
-     that loses it — shows eleven records rather than an empty grid. */
-  composes: salon-enter from global;
   margin: 0;
+  opacity: 1;
+  /* See the STACKING note below: unconditional, because z-index does nothing
+     on a static box and the promotion has to survive the close. */
+  position: relative;
+  z-index: 1;
+  transition: z-index 0s var(--vitrine-dur-close, var(--salon-dur-ui, 240ms));
 }
 
-/* The stagger index `.salon-enter` reads. Crate.tsx cannot set it inline
-   without a prop it has no reason to carry, and nth-child is the same
-   information: position in the crate. Capped at eight steps (160ms at the
-   20ms token) so the tail is not still arriving after the top has settled. */
-.item:nth-child(2) { --salon-enter-index: 1; }
-.item:nth-child(3) { --salon-enter-index: 2; }
-.item:nth-child(4) { --salon-enter-index: 3; }
-.item:nth-child(5) { --salon-enter-index: 4; }
-.item:nth-child(6) { --salon-enter-index: 5; }
-.item:nth-child(7) { --salon-enter-index: 6; }
-.item:nth-child(8) { --salon-enter-index: 7; }
-.item:nth-child(n + 9) { --salon-enter-index: 8; }
+@media (prefers-reduced-motion: no-preference) {
+  .item {
+    transition:
+      opacity var(--dur-reveal) var(--ease)
+        calc(var(--salon-stagger, 20ms) * var(--row-index, 0)),
+      /* Repeated, not inherited: this shorthand would otherwise reset the
+         z-index transition declared on .item above. */
+      z-index 0s var(--vitrine-dur-close, var(--salon-dur-ui, 240ms));
+  }
+
+  @starting-style {
+    .item {
+      opacity: 0;
+    }
+  }
+}
+
+/* The stagger index. Crate.tsx cannot set it inline without a prop it has no
+   reason to carry, and nth-child is the same information: position in the
+   crate. Capped at eight steps (160ms at the 20ms token) so the tail is not
+   still arriving after the top has settled. */
+.item:nth-child(2) { --row-index: 1; }
+.item:nth-child(3) { --row-index: 2; }
+.item:nth-child(4) { --row-index: 3; }
+.item:nth-child(5) { --row-index: 4; }
+.item:nth-child(6) { --row-index: 5; }
+.item:nth-child(7) { --row-index: 6; }
+.item:nth-child(8) { --row-index: 7; }
+.item:nth-child(n + 9) { --row-index: 8; }
+
+/*
+  STACKING, and it is required rather than tidy. `.disc` z1 and `.sleeve` z2
+  used to resolve in the ROOT stacking context, because no ancestor up to
+  <html> created one. Free rightward travel before a moving disc slid UNDER the
+  neighbouring card's sleeve was 51.3px at the 280px ceiling — 11.3px of shot
+  remainder plus the 40px gutter — and the disc travels 140px. `isolation` on
+  .stage makes the disc/sleeve pair card-local; promoting the open card lifts
+  the whole card, disc included, over its neighbours.
+*/
+/*
+  The promotion has to OUTLAST the close. `:has()` unmatches in the frame
+  `[open]` is removed, but --vitrine-open only then begins interpolating 1 -> 0
+  across --vitrine-dur-close, so the disc is still up to 140px out with 83.3px
+  of free travel; dropping the card back into flow immediately lets the
+  neighbouring sleeve paint over roughly 57px of the leading edge. That fires on
+  every close and on every open -> open switch. `position` is unconditional on
+  .item above — z-index does nothing on a static box — and the drop is delayed
+  by the close duration there, then zeroed here, where the disc needs cover from
+  the first frame out.
+*/
+.item:has(details[open]) {
+  z-index: 2;
+  transition-delay: 0s;
+}
 
 .shot {
   position: relative;
   width: calc(var(--cr-jacket) * 1.5);
 }
 
-/* The packshot is the link when a project has somewhere to go. Six of eleven
-   have `links: {}` and render `.plain` instead: not focusable, no pointer
-   cursor, no hover response, so they do not look interactive (spec 3). */
-.link,
-.plain {
-  display: block;
-  color: inherit;
-  text-decoration: none;
+/* --------------------------------------------------------------------------
+   THE VITRINE. `.record` is the <details>; `.face` is the <summary> that holds
+   the object. The primitive supplies the block display, the retired disclosure
+   marker, the pointer cursor and the focus ring — none of that is repeated
+   here. What is here is the one number everything else is derived from.
+
+   The fallback differs by state ON PURPOSE. `--vitrine-open` is registered in
+   app/globals.css and always resolves while that file is present, so neither
+   fallback is ever reached in a healthy build. If the registration goes missing
+   — which has happened to this project once — a single `0` fallback would pin
+   every record shut and a single `1` would leave all eleven permanently pulled
+   out of their sleeves. Reading the native attribute for the fallback means the
+   object still opens and still closes, it simply stops interpolating.
+   -------------------------------------------------------------------------- */
+.record {
+  --open: var(--vitrine-open, 0);
 }
 
-.link:focus-visible {
-  outline: 2px solid var(--salon-accent);
-  outline-offset: 4px;
+.record[open] {
+  --open: var(--vitrine-open, 1);
+}
+
+.face {
+  border-radius: 2px;
+  /* A 420px tap target flashing grey on iOS reads as a broken button. */
+  -webkit-tap-highlight-color: transparent;
 }
 
 .stage {
   position: relative;
   width: var(--cr-jacket);
   height: var(--cr-jacket);
+  /* See the STACKING note above. */
+  isolation: isolate;
+  /*
+    The hover elevation, carried by the stage so the disc and the sleeve rise
+    together and the occlusion between them is untouched. `.shadow` cancels it
+    below and stays planted on the plate, which is what makes the move read as
+    height rather than as the whole card sliding. --salon-lift is 0px under
+    reduced motion at source, so the lift stops rather than merely snapping.
+  */
+  --lift: 0px;
+  transform: translateY(var(--lift));
+  transition: transform var(--dur-ui) var(--ease);
 }
 
 /* --------------------------------------------------------------------------
-   DISC — behind the sleeve (z 1 against the sleeve's z 2), slid right by
-   exactly one radius. Occlusion is doing the depth work.
+   DISC — behind the sleeve (z 1 against the sleeve's z 2). At rest it is slid
+   right by exactly one radius and occlusion is doing the depth work; opened it
+   travels a further half jacket, which lands its left edge precisely on the
+   jacket's right edge and shows the whole face.
+
+   0.5J and not less. 0.25J leaves 79.3% of the disc still inside the sleeve
+   and 0.35J leaves 90% — both read as a record that has snagged. This is the
+   one sanctioned exception to the 24px travel cap: a record leaving a sleeve is
+   an object animation, and its distance is set by its own radius.
+
+   --rock is 6deg over the whole move: 14.3 deg/s, a drag against the mouth of
+   the sleeve. It is deliberately NOT a spin. 33 1/3 rpm is 200 deg/s, so 420ms
+   of honest rotation is 84 degrees, which lands the label at an angle nobody
+   chose and reads as a loading spinner. The rotation is paid after the record
+   lands, on .platter, and only there.
    -------------------------------------------------------------------------- */
 .disc {
   position: absolute;
@@ -161,30 +288,115 @@
   height: calc(var(--cr-jacket) * 0.9596);
   border-radius: 50%;
   z-index: 1;
+  background: #0a0a0b;
+
+  --slide: calc(var(--open) * 0.5 * var(--cr-jacket));
+  --rock: calc(var(--open) * 6deg);
+  /* 0.02J of rise, so the arc the shadows describe below has something to be
+     the shadow OF. */
+  --dy: calc(var(--open) * -0.02 * var(--cr-jacket));
+
+  transform: translate(var(--slide), var(--dy)) rotate(var(--rock));
+
+  /*
+    Two layers on the shared recipe (y / 2y blur / -y/2 spread), tinted with
+    rgb(6 12 8) — the Salon green driven to its floor — rather than pure black.
+    Composited over the plate the near stop lands almost exactly on #0E1610, so
+    the shadow reads as the room's own dark rather than as a grey wash over it.
+
+    Both lobes are driven by the same scalar as the travel, and they are driven
+    APART: the near lobe goes 6 -> 14 offset and 12 -> 26 blur while its alpha
+    drops 0.55 -> 0.42, the far one follows one step of the same series. At rest
+    the two are a single blob under a disc lying flat against the sleeve; opened
+    they separate into two lobes, and that separation is the strongest cue on
+    the card that these are two objects and not one printed picture.
+  */
+  box-shadow:
+    0 calc(var(--cr-px) * (6 + 8 * var(--open))) calc(var(--cr-px) * (12 + 14 * var(--open)))
+      calc(var(--cr-px) * -3) rgba(6, 12, 8, calc(0.55 - 0.13 * var(--open))),
+    0 calc(var(--cr-px) * (18 + 16 * var(--open))) calc(var(--cr-px) * (36 + 32 * var(--open)))
+      calc(var(--cr-px) * -9) rgba(6, 12, 8, calc(0.62 - 0.14 * var(--open))),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.07);
+}
+
+/* The record itself: grooves, base and label, and the only thing that spins.
+   Separated from .disc so the shadows and the key light stay out of the
+   rotation — a box-shadow that revolves around its own object is the tell that
+   the shadow is painted on. */
+.platter {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
   background:
-    /* The broad anisotropic sheen sweeping the groove field. This one gradient
-       is the effect that sells vinyl. */
-    linear-gradient(
-      114deg,
-      rgba(255, 255, 255, 0) 28%,
-      rgba(255, 255, 255, 0.16) 42%,
-      rgba(255, 255, 255, 0.3) 48%,
-      rgba(255, 255, 255, 0.13) 55%,
-      rgba(255, 255, 255, 0) 68%
-    ),
     /* ONE repeating gradient for the entire groove field. Real density runs to
        260 grooves per inch, which is 7.7 grooves per pixel here — drawing them
        individually guarantees moire, not detail. */
-      repeating-radial-gradient(circle at 50% 50%, #0c0c0d 0 2px, #131315 2px 4px),
+    repeating-radial-gradient(circle at 50% 50%, #0c0c0d 0 2px, #131315 2px 4px),
     radial-gradient(circle at 50% 50%, #17171a 0 33%, #0e0e10 34%, #131316 78%, #0a0a0b 100%);
-  /* Two layers on the shared recipe (y / 2y blur / -y/2 spread), tinted with
-     rgb(6 12 8) — the Salon green driven to its floor — rather than pure black.
-     Composited over the plate the near stop lands almost exactly on #0E1610, so
-     the shadow reads as the room's own dark rather than as a grey wash over it. */
-  box-shadow:
-    0 calc(var(--cr-px) * 6) calc(var(--cr-px) * 12) calc(var(--cr-px) * -3) rgba(6, 12, 8, 0.55),
-    0 calc(var(--cr-px) * 18) calc(var(--cr-px) * 36) calc(var(--cr-px) * -9) rgba(6, 12, 8, 0.62),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.07);
+}
+
+/* --------------------------------------------------------------------------
+   THE KEY LIGHT, and it is the make-or-break of the whole move.
+
+   Vinyl sheen is anisotropic and rotationally symmetric. Rotating a record
+   does NOT move its highlight; sliding a record DOES sweep the highlight
+   across it. Stacked as a third background layer on the disc, as it was, the
+   sheen would translate and rotate with the object and the record would read
+   as a photograph of a record the instant it moved.
+
+   So the sheen is a lamp, not a paint layer. `.sheen` is a child of the disc
+   and therefore clips to wherever the disc currently is; `.sheenLight` inside
+   it carries the gradients and applies the exact inverse of the disc's pose
+   about the disc's own centre, which pins the light to page space. The sweep
+   then falls out for free: the disc travels 140px through a stationary light.
+
+   The inverse is exact, not approximate — same transform functions in reverse
+   order about the same origin, and no transition on either element, so the two
+   are computed from the same scalar in the same frame and can never desync.
+   The 114deg sweep and the jacket's 104deg laminate imply the same upper-left
+   key, so the two surfaces agree.
+
+   The first gradient is the ambient occlusion at the mouth of the sleeve: 0.06
+   jackets wide, anchored at the jacket's open right edge (50% of this 2-jacket
+   box) and fixed in page space like the light. The newly revealed left edge of
+   the disc arrives dark and lifts as it clears the sleeve, which is what makes
+   it read as coming OUT of something rather than sliding along behind it.
+   -------------------------------------------------------------------------- */
+.sheen {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.sheenLight {
+  position: absolute;
+  /* Spans the shot's own 1.5 jackets plus the travel: stage x 0 -> 2J, y 0 -> J. */
+  left: calc(var(--cr-jacket) * -0.5);
+  top: calc(var(--cr-jacket) * -0.0202);
+  width: calc(var(--cr-jacket) * 2);
+  height: var(--cr-jacket);
+  /* The disc's centre, expressed in this box. Rotating about anything else
+     leaves a residue that grows with the travel. */
+  transform-origin: calc(var(--cr-jacket) * 0.9798) calc(var(--cr-jacket) * 0.5);
+  transform: rotate(calc(-1 * var(--rock)))
+    translate(calc(-1 * var(--slide)), calc(-1 * var(--dy)));
+  background:
+    linear-gradient(
+      90deg,
+      rgba(0, 0, 0, 0) 0 50%,
+      rgba(0, 0, 0, 0.55) 50%,
+      rgba(0, 0, 0, 0) 53%
+    ),
+    linear-gradient(
+      114deg,
+      rgba(255, 255, 255, 0) 48%,
+      rgba(255, 255, 255, 0.16) 60%,
+      rgba(255, 255, 255, 0.3) 65.3%,
+      rgba(255, 255, 255, 0.13) 71.5%,
+      rgba(255, 255, 255, 0) 83%
+    );
 }
 
 /* 101.6mm label on a 301.6mm disc. */
@@ -261,7 +473,13 @@
 
    container-type: inline-size is MANDATORY and load-bearing. Every cqw in
    every archetype under ./covers resolves against this element. Remove it and
-   all cover typography computes to zero with no error, in any browser.
+   all cover typography computes to zero with no error, in any browser. The
+   same goes for its size and its place in the tree: the panel is a sibling of
+   the <summary>, never a child of this box.
+
+   The sleeve does not travel. You hold the jacket and pull the disc out of it,
+   so the only concession is 0.004 jackets of recoil — about 1px — against the
+   direction the disc leaves in.
    -------------------------------------------------------------------------- */
 .sleeve {
   position: absolute;
@@ -270,6 +488,7 @@
   overflow: hidden;
   isolation: isolate;
   container-type: inline-size;
+  transform: translateX(calc(var(--open) * -0.004 * var(--cr-jacket)));
   /*
     Three layers, geometric offsets 4 / 12 / 30, blur 2x the offset and spread
     -offset/2, all in --cr-px so the stack rescales with the jacket. Tinted
@@ -278,14 +497,15 @@
     makes a rendered object read as pasted onto the page.
 
     The inset hairline is spec 1.3's rule for a dark ground and stays. It is
-    the second channel of the hover response below, so it is deliberately not
-    folded into the stack.
+    the second channel of the hover and open responses below, so it is
+    deliberately not folded into the stack.
   */
   box-shadow:
     0 calc(var(--cr-px) * 4) calc(var(--cr-px) * 8) calc(var(--cr-px) * -2) rgba(12, 22, 16, 0.24),
     0 calc(var(--cr-px) * 12) calc(var(--cr-px) * 24) calc(var(--cr-px) * -6) rgba(12, 22, 16, 0.3),
     0 calc(var(--cr-px) * 30) calc(var(--cr-px) * 60) calc(var(--cr-px) * -15) rgba(12, 22, 16, 0.38),
     inset 0 0 0 1px var(--salon-edge);
+  transition: box-shadow var(--dur-ui) var(--ease);
 }
 
 /* --------------------------------------------------------------------------
@@ -350,7 +570,9 @@
     0 0 0 1px rgba(0, 0, 0, 0.3);
 }
 
-/* Contact shadow, under everything. Scaled off the jacket so it tracks size. */
+/* Contact shadow, under everything. Scaled off the jacket so it tracks size.
+   It cancels the stage's hover lift so it stays planted on the plate while the
+   objects above it rise. */
 .shadow {
   position: absolute;
   left: 6%;
@@ -366,27 +588,32 @@
   background: radial-gradient(ellipse at 46% 40%, rgba(6, 12, 8, 0.7) 0%, rgba(6, 12, 8, 0) 70%);
   filter: blur(calc(var(--cr-jacket) * 0.0212));
   opacity: 0.88;
+  --shadow-dy: 0px;
+  --shadow-sx: 1;
+  transform: translateY(calc(var(--shadow-dy) - var(--lift))) scaleX(var(--shadow-sx));
   transition:
     opacity var(--dur-ui) var(--ease),
     transform var(--dur-ui) var(--ease);
 }
 
 /* --------------------------------------------------------------------------
-   META LINE — flat HTML under the shot. This, not the cover artwork, is where
-   the accessible name of the object lives, and it is the ONLY place: every text
-   node inside .stage is aria-hidden, because all of the sleeve and disc type
-   falls under the 8px floor in spec 3 somewhere in the jacket's 180-280px
-   range. The sleeve is a picture of print, not readable UI — so anything a
-   cover needs to say has to be said here instead.
+   META LINE — flat HTML under the shot, inside the face. This, not the cover
+   artwork, is where the accessible name of the object lives, and it is the
+   ONLY place: every text node inside .stage is aria-hidden, because all of the
+   sleeve and disc type falls under the 8px floor in spec 3 somewhere in the
+   jacket's 180-280px range. The sleeve is a picture of print, not readable UI —
+   so anything a cover needs to say has to be said here instead, and everything
+   it cannot say at all is said in the panel.
    -------------------------------------------------------------------------- */
 /*
   WIDTH IS 100%, i.e. the full 1.5 jackets of `.shot`, and this is the fix for
   the most visible break on the object. The sleeve is one jacket wide but the
-  disc slides right by a radius and runs to 1.46 jackets, so a caption rule set
-  to `--cr-jacket` spans 68% of what the eye reads as the object and terminates
-  squarely under the face of the disc — a hairline that stops dead mid-object,
-  on all eleven cards. At the shot's own width it rules the whole column, ends
-  clear of the disc, and lines up with its neighbours across the row.
+  disc sits one radius to the right and runs to 1.46 jackets, so a caption rule
+  set to `--cr-jacket` spans 68% of what the eye reads as the object and
+  terminates squarely under the face of the disc — a hairline that stops dead
+  mid-object, on all eleven cards. At the shot's own width it rules the whole
+  column, ends clear of the disc, and lines up with its neighbours across the
+  row.
 */
 .meta {
   margin-top: 24px;
@@ -420,44 +647,46 @@
 }
 
 /* --------------------------------------------------------------------------
-   HOVER / FOCUS
+   HOVER / FOCUS / OPEN
 
-   Five of eleven cards are interactive. The old response was a title colour
-   plus .shadow going 0.88 -> 1 — a 12% change on an already-soft radial
-   gradient, which is not visible in practice, so none of the five announced
-   itself.
+   All eleven cards are now the same object and all eleven respond the same
+   way. The <summary> is the whole face, so `:hover` here means the card, and
+   the primitive supplies `:focus-visible`.
 
-   Three channels now, on the shared UI duration and curve:
+   Three channels on the shared UI duration and curve, and a fourth that only
+   the open state gets:
 
-     ELEVATION  the object rises --salon-lift. .disc and .sleeve move together so the
-                occlusion between them is untouched; .shadow stays planted on
-                the plate, which is what makes the move read as height rather
-                than as the whole card sliding.
-     SURFACE    the inset hairline roughly doubles and the shadow stack deepens
-                to the next step of the same geometric series.
+     ELEVATION  the stage rises --salon-lift. Disc and sleeve move together so
+                the occlusion between them is untouched; .shadow cancels the
+                same amount and stays planted on the plate, which is what makes
+                the move read as height rather than as the card sliding.
+     SURFACE    the inset hairline goes --salon-edge -> --salon-edge-strong and
+                the shadow stack deepens to the next step of the same
+                geometric series.
      CONTACT    the contact shadow spreads and settles, the way a real one does
                 as the object it belongs to lifts away from it.
+     TRAVEL     open only, and derived from the scalar rather than from any of
+                these rules.
 
    --salon-lift is 4px, the bottom of the sanctioned travel range. On a 280px
    object that is 1.4% of its height: felt, not watched. Under reduced motion
    the token is 0px at source, so the lift stops rather than merely snapping.
    -------------------------------------------------------------------------- */
-.disc,
-.sleeve {
-  transition:
-    transform var(--dur-ui) var(--ease),
-    box-shadow var(--dur-ui) var(--ease);
+.face:hover .stage,
+.face:focus-visible .stage {
+  --lift: calc(-1 * var(--salon-lift, 4px));
 }
 
-.link:hover .disc,
-.link:focus-visible .disc,
-.link:hover .sleeve,
-.link:focus-visible .sleeve {
-  transform: translateY(calc(-1 * var(--salon-lift, 4px)));
+.face:hover .shadow,
+.face:focus-visible .shadow {
+  opacity: 1;
+  --shadow-dy: 2px;
+  --shadow-sx: 1.06;
 }
 
-.link:hover .sleeve,
-.link:focus-visible .sleeve {
+.face:hover .sleeve,
+.face:focus-visible .sleeve,
+.record[open] .sleeve {
   box-shadow:
     0 calc(var(--cr-px) * 6) calc(var(--cr-px) * 12) calc(var(--cr-px) * -3) rgba(12, 22, 16, 0.3),
     0 calc(var(--cr-px) * 18) calc(var(--cr-px) * 36) calc(var(--cr-px) * -9) rgba(12, 22, 16, 0.36),
@@ -465,50 +694,139 @@
     inset 0 0 0 1px var(--salon-edge-strong);
 }
 
-.link:hover .shadow,
-.link:focus-visible .shadow {
-  opacity: 1;
-  transform: translateY(2px) scaleX(1.06);
-}
-
-.link:hover .metaTitle,
-.link:focus-visible .metaTitle {
+.face:hover .metaTitle,
+.face:focus-visible .metaTitle,
+.record[open] .metaTitle {
   color: var(--salon-accent);
 }
 
-.link:hover .meta,
-.link:focus-visible .meta {
+.face:hover .meta,
+.face:focus-visible .meta,
+.record[open] .meta {
   border-color: var(--salon-accent);
 }
 
-/* Second destination for the one project that has two. Sits OUTSIDE the
-   packshot anchor: an anchor inside an anchor is invalid and unreachable. */
-.extras {
+/*
+  THE SPIN, and it is paid only after the record has landed. 1800ms is 33 1/3
+  rpm exactly. It runs on .platter, so the grooves and the label revolve while
+  the two shadow lobes and the key light — which belong to the room, not to the
+  record — hold still.
+
+  Autonomous motion, so the whole rule sits inside `no-preference`: under
+  `reduce` the record still slides out and still shows its panel, it simply
+  never turns.
+*/
+@media (prefers-reduced-motion: no-preference) {
+  /*
+    Applied always, PAUSED until the record opens. Binding the animation itself
+    to `[open]` removes it the instant the record closes, which reverts
+    `transform` to none and snaps the label from whatever angle it had reached
+    straight back to 0deg — while the disc is still visibly sliding home for
+    --vitrine-dur-close. Opening hides it behind the delay; closing does not.
+
+    Pausing holds the angle instead, so a record picked up again resumes where
+    it stopped. That is also what the object does: a platter does not rewind
+    when you lift the needle. The delay is consumed once, on the first open, so
+    later opens spin during the slide rather than after it — correct for a deck
+    that is already up to speed.
+  */
+  .platter {
+    animation: spin 1800ms linear infinite;
+    animation-delay: var(--vitrine-dur-open, var(--salon-dur-slow, 420ms));
+    animation-play-state: paused;
+  }
+
+  .record[open] .platter {
+    animation-play-state: running;
+  }
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* --------------------------------------------------------------------------
+   THE PANEL — what the object had no room to say on its face.
+
+   A sibling of the <summary> and never a child of .sleeve, which is
+   `overflow: hidden`, `isolation: isolate` and the container every cover's
+   typography is measured against.
+
+   It stays DARK. `.salon-sheet` is not an option at any size: the
+   `body:has(.salon-shell .salon-sheet)` rule in globals.css takes the entire
+   admin ground light over 500ms, so opening a record would repaint the room.
+   The screen-space grain is `mix-blend-mode: overlay` at z 60 over everything,
+   which tints a light panel and leaves a dark one alone. Plate tones on both
+   counts.
+   -------------------------------------------------------------------------- */
+.detail {
+  margin-block-start: 16px;
+  padding: 20px 20px 22px;
+  background: var(--salon-plate);
+  box-shadow: inset 0 0 0 1px var(--salon-edge);
+  border-radius: 2px;
+}
+
+.note {
+  margin: 0;
+  font-family: var(--salon-font-read);
+  font-size: var(--salon-t-body-size);
+  line-height: 1.55;
+  letter-spacing: var(--salon-t-body-track);
+  color: var(--salon-ink);
+  max-width: 62ch;
+}
+
+.tech {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
-  margin: 12px 0 0;
-  /* Same width as .meta above, for the same reason: these range against the
-     caption rule, not against the sleeve. */
-  width: 100%;
+  gap: 8px;
+  margin: 18px 0 0;
   padding: 0;
   list-style: none;
 }
 
-.extra {
+.techItem {
+  composes: salon-label from global;
+  border: 1px solid var(--salon-line);
+  border-radius: 2px;
+  padding: 4px 8px;
+}
+
+/* Every destination the project has, and nothing at all when it has none. */
+.outbound {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 20px;
+  margin: 20px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.out {
   composes: salon-label from global;
   color: var(--salon-accent);
   text-decoration: none;
-  border-bottom: 1px solid transparent;
+  border-bottom: 1px solid var(--salon-accent-d);
+  padding-bottom: 2px;
   transition: border-color var(--dur-ui) var(--ease);
 }
 
-.extra:hover,
-.extra:focus-visible {
+.out::after {
+  content: " ↗";
+}
+
+.out:hover,
+.out:focus-visible {
   border-bottom-color: var(--salon-accent);
 }
 
-.extra:focus-visible {
+.out:focus-visible {
   outline: 2px solid var(--salon-accent);
   outline-offset: 3px;
 }

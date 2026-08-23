@@ -1,0 +1,528 @@
+/* ---------------------------------------------------------------------------
+   Catalogue — the readable surface for the 39 volumes, and the surface a
+   volume OPENS on.
+
+   ONE TYPE SIZE FOR ALL 39, DECOUPLED FROM SPINE WIDTH. Title 14px Karla, code
+   12.5px IBM Plex Mono, horizontal, `transform: none`, no `writing-mode`. No
+   value in this file is derived from `--w`, `--h` or anything else the spine
+   geometry knows about. That decoupling is the whole point: the object's own
+   labelling is a recognition cue at the angular size 5mm spine type really has,
+   and a recognition cue is not a reading surface. The clamp in Bookcase.tsx
+   stays where it is; nothing here asks it to move.
+
+   Numbers, so a later edit knows what it is spending:
+     14px Karla ~ 10px cap ~ 12.8 arcmin at reading distance, over the 12-arcmin
+     critical print size below which reading speed collapses (Legge & Bigelow).
+     The median spine sits at 7.2 arcmin. Horizontal also drops the 1.81x
+     rotation penalty vertical-rl carries (Yu, Park, Gerold & Legge, JOV 2010).
+     Rows flow, so there is no fitted budget to overflow when a user stylesheet
+     forces `letter-spacing: 0.12em` (SC 1.4.12), and every string here is real
+     ink on a real surface rather than on a foil gradient anchored to its own
+     box. Everything clears 4.5:1 in every state it can be in — see --label-ink
+     below, which is the one place that needed thought.
+
+   NOT 3D. This subtree is a sibling of the case, never an ancestor of it. The
+   panel below animates its height, which needs `overflow: hidden`, and overflow
+   silently forces `transform-style: flat` on whatever carries it — a shelf has
+   already been flattened on this project exactly that way.
+
+   PANEL STAYS DARK. Never `.salon-sheet` here: `body:has(.salon-shell
+   .salon-sheet)` takes the whole admin ground light over 500ms, so a book
+   opening would repaint the room. `.salon-grain` is also fixed at z-60 in
+   `overlay`, which tints a light panel far more than a dark one. Both point the
+   same way, so the spread is --salon-raised.
+
+   MOTION. Every duration and curve resolves from the shared Salon tokens with
+   its own measured value as the var() fallback, so a build that drops the
+   custom properties still animates correctly rather than falling back to
+   `all 0s ease`. Nothing here gates a VISIBLE state on motion: the two
+   properties derived from --vitrine-open are a chevron rotation and a 6px
+   settle, and both resolve to "in place, no animation" if the scalar never
+   arrives.
+   --------------------------------------------------------------------------- */
+
+.catalogue {
+  --ease: var(--salon-ease, cubic-bezier(0.25, 1, 0.5, 1));
+  --dur-ui: var(--salon-dur-ui, 240ms);
+
+  /*
+    SECONDARY INK, TUNED TO THE GROUND IT ACTUALLY LANDS ON. The same local
+    override Bookcase.module.css makes for the shelf caption, and for the same
+    reason: --salon-muted is a PAGE-GROUND value.
+
+    Measured. --salon-muted #93A69B is 6.65:1 on --salon-plate but only 4.27:1
+    on --salon-raised, and everything secondary here sits on raised in at least
+    one state — the code and the semester whenever the row is hovered or open,
+    the verso labels always. #9DAFA4 is 4.76:1 on raised and 7.41:1 on plate:
+    it clears 4.5:1 in both states, and the lift on the plate is small enough
+    that it does not start competing with --salon-ink on the titles.
+  */
+  --label-ink: #9dafa4;
+
+  /* 48px matches the bookcase viewport's inline padding, so the list ranges off
+     the same line the case does. The viewport already contributes 80px below
+     the bottom shelf, so nothing is added on top here. */
+  padding: 0 48px 72px;
+}
+
+/* 15rem verso + 47px gutter + 592px recto = 896px, which is also the row width.
+   Row and spread share one measure so the opened page lines up under the row it
+   came from. */
+.inner {
+  max-width: 56rem;
+  margin-inline: auto;
+}
+
+.heading {
+  margin: 0;
+  font-family: var(--salon-font-display);
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--salon-ink);
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--salon-line);
+}
+
+.year {
+  margin-top: 34px;
+}
+
+/* The four academic years the shelves are grouped by, in the same order and
+   under the same labels. */
+.yearLabel {
+  composes: salon-label from global;
+  margin: 0 0 6px;
+  font-size: 11.5px;
+  color: var(--salon-muted);
+}
+
+.rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/* ---------------------------------------------------------------------------
+   A volume. The <details> the primitive renders; `.face` is its <summary>.
+   --------------------------------------------------------------------------- */
+
+/*
+  --vitrine-open is declared HERE as well as on the primitive. Same two values,
+  so nothing conflicts and the primitive's transition (and its @property
+  registration, which is what makes the scalar interpolate) still drive it. What
+  the redundancy buys is that the chevron and the settle below are correct in
+  the open state even if the primitive's own stylesheet never arrives — the
+  exact failure this project has already shipped once.
+*/
+.volume {
+  --vitrine-open: 0;
+  border-top: 1px solid var(--salon-edge);
+}
+
+.volume[open] {
+  --vitrine-open: 1;
+}
+
+.rows > li:last-child .volume {
+  border-bottom: 1px solid var(--salon-edge);
+}
+
+/*
+  Every face rule is scoped under `.volume` — two classes, not one — on
+  purpose. The primitive sets `display: block` on the same <summary> from its
+  own module, and two single-class rules would be decided by whichever
+  stylesheet the bundler happened to emit second. `display: grid` is the one
+  declaration here that must win outright, and the rest follow it for
+  consistency rather than for need.
+*/
+.volume .face {
+  display: grid;
+  grid-template-columns: 7rem minmax(0, 1fr) 26px auto;
+  align-items: baseline;
+  column-gap: 1.25rem;
+  padding: 10px 12px 10px 34px;
+  position: relative;
+  cursor: pointer;
+  /* Both halves are needed: `list-style` handles Chrome and Firefox, the
+     WebKit pseudo-element handles Safari. The disclosure state is drawn as
+     ::before instead so it can turn on the open scalar. */
+  list-style: none;
+  transition: background-color var(--dur-ui) var(--ease);
+  /* Arriving here from a spine anchor should not park the row against the top
+     edge of the viewport. */
+  scroll-margin-block: 32px;
+}
+
+.volume .face::-webkit-details-marker {
+  display: none;
+}
+
+.volume .face::marker {
+  content: "";
+}
+
+.volume .face:hover {
+  background: var(--salon-raised);
+}
+
+.volume[open] .face {
+  background: var(--salon-raised);
+}
+
+/*
+  The disclosure chevron. -45deg is a right-pointing corner, +45deg a
+  down-pointing one, so the whole travel is `-45deg + open * 90deg`. If
+  --vitrine-open is never declared the fallback holds it closed and the row
+  still opens on click — the marker is an indicator, not a gate.
+
+  4.35:1 against the plate. SC 1.4.11 asks 3:1 of a non-text indicator.
+*/
+.volume .face::before {
+  content: "";
+  position: absolute;
+  left: 13px;
+  top: 1.1em;
+  width: 6px;
+  height: 6px;
+  border-right: 1.5px solid var(--salon-subtle);
+  border-bottom: 1.5px solid var(--salon-subtle);
+  transform: translateY(-50%) rotate(calc(-45deg + var(--vitrine-open, 0) * 90deg));
+  transition:
+    transform var(--dur-ui) var(--ease),
+    border-color var(--dur-ui) var(--ease);
+}
+
+/* Ink wherever the row has gone to --salon-raised. --salon-subtle is 4.35:1 on
+   the plate but only 2.79:1 on raised, under the 3:1 SC 1.4.11 asks of a state
+   indicator, and `:target` reaches raised without the pointer ever being
+   there. */
+.volume .face:hover::before,
+.volume .face:target::before,
+.volume[open] .face::before {
+  border-color: var(--salon-ink);
+}
+
+/* No focus rule here. The primitive puts `.salon-focus` on the summary, which
+   is the one ring the staff area has, and it already follows the ground it
+   lands on. A second rule at the same specificity would be settled by
+   stylesheet order. */
+
+/*
+  The row a spine anchor points at. Persists after the jump, which is the
+  point: the URL and the marked row say the same thing.
+
+  It is also carrying real weight. Measured in Chrome 148: a fragment landing
+  focuses the <summary> but does NOT match `:focus-visible`, so the shared ring
+  never fires and the arrival would otherwise be silent. This is the only mark
+  on the row a reader who came from a spine can see.
+*/
+.volume .face:target {
+  background: var(--salon-raised);
+  box-shadow: inset 2px 0 0 var(--salon-accent);
+}
+
+/* 12.5px mono. The longest code is 11 characters ("COMPSCI 61A", "COMLIT
+   60AC"), which is 88px against the 112px column. */
+.code {
+  grid-column: 1;
+  font-family: var(--salon-font-mono);
+  font-size: 12.5px;
+  line-height: 1.5;
+  letter-spacing: 0.04em;
+  color: var(--label-ink);
+  white-space: nowrap;
+}
+
+/* The FULL catalogue title, at one size for all 39. --salon-ink over
+   --salon-plate. */
+.title {
+  grid-column: 2;
+  font-family: var(--salon-font-ui);
+  font-size: 14px;
+  line-height: 1.45;
+  letter-spacing: 0;
+  color: var(--salon-ink);
+}
+
+.semester {
+  grid-column: 4;
+  font-family: var(--salon-font-ui);
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--label-ink);
+  white-space: nowrap;
+  text-align: right;
+}
+
+/* A miniature of the gilt headband, the same stripe the page legend shows and
+   the shelf draws at the head of those 13 spines. Decorative: the panel below
+   carries the guide as a real, named link. */
+.gilt {
+  grid-column: 3;
+  align-self: center;
+  width: 16px;
+  height: 3px;
+  background: repeating-linear-gradient(90deg, #f2dc9e 0 1.5px, #6b5324 1.5px 3px);
+  opacity: 0.85;
+}
+
+/* ---------------------------------------------------------------------------
+   The spread — "the book opens on the page".
+
+   No hinge, no rotation, no perspective. A spine is 18-72px wide, so hinging
+   the spine face about its drawn groove projects to 5.6px at 72deg on the ten
+   narrowest volumes; an opened spread is 261-309px against a 566px case and
+   would cover five to seven neighbours; and translateZ(64px) at 3200px of
+   perspective buys +1.90% scale, which is no depth cue at all. What makes this
+   read as a spread is the gutter, not a fake fold.
+   --------------------------------------------------------------------------- */
+
+.spread {
+  display: grid;
+  grid-template-columns: minmax(0, 15rem) 47px minmax(0, 1fr);
+  margin: 0 0 16px;
+  background: var(--salon-raised);
+  box-shadow: inset 0 0 0 1px var(--salon-edge);
+  /* No transform and no transition. The primitive already settles every direct
+     child of the panel by 6px on `translate`, which is inside the travel budget
+     and lands with the height. A second offset here would compose with that one
+     and double it. */
+}
+
+/* Padding lives on the two pages, not the spread, so the gutter runs the full
+   height of the taller one. 34px on the left aligns the verso with the row
+   text above it. */
+.verso {
+  padding: 26px 22px 26px 34px;
+}
+
+.recto {
+  padding: 26px 26px 26px 22px;
+}
+
+/*
+  THE GUTTER FALLOFF. A real gutter shadow spans 8-14mm; 12mm of a 152mm page
+  across a 592px measure is 47px. Two layers: the falloff, symmetric about the
+  binding and dying to nothing at both edges, and the binding line itself at
+  1px. Tinted with the room's own darkest green rather than pure black, the way
+  the case shadow is.
+*/
+.gutter {
+  background-image:
+    linear-gradient(
+      90deg,
+      rgba(8, 14, 10, 0) 0%,
+      rgba(8, 14, 10, 0.14) 26%,
+      rgba(8, 14, 10, 0.4) 44%,
+      rgba(8, 14, 10, 0.5) 50%,
+      rgba(8, 14, 10, 0.4) 56%,
+      rgba(8, 14, 10, 0.14) 74%,
+      rgba(8, 14, 10, 0) 100%
+    ),
+    linear-gradient(
+      90deg,
+      transparent calc(50% - 0.5px),
+      rgba(8, 14, 10, 0.72) calc(50% - 0.5px),
+      rgba(8, 14, 10, 0.72) calc(50% + 0.5px),
+      transparent calc(50% + 0.5px)
+    );
+}
+
+/* The headband at the head of the verso — the same gilt the shelf draws on
+   these 13 and the same the row marks them with. */
+.versoHeadband {
+  display: block;
+  width: 100%;
+  height: 3px;
+  margin-bottom: 16px;
+  background: repeating-linear-gradient(90deg, #f2dc9e 0 1.5px, #6b5324 1.5px 3px);
+  opacity: 0.85;
+}
+
+.facts {
+  margin: 0;
+}
+
+.fact + .fact {
+  margin-top: 14px;
+}
+
+/* Scoped to two classes so the colour beats `.salon-label`'s own without
+   depending on which chunk the bundler emits second. */
+.factLabel {
+  composes: salon-label from global;
+  margin: 0;
+}
+
+.verso .factLabel {
+  color: var(--label-ink);
+}
+
+.factValue {
+  margin: 3px 0 0;
+  font-family: var(--salon-font-ui);
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--salon-ink);
+}
+
+.factValue.mono {
+  font-family: var(--salon-font-mono);
+  font-size: 13px;
+  letter-spacing: 0.04em;
+}
+
+/* A grid rather than an inline chip, so a department name that wraps — and
+   "Electrical Engineering and Computer Sciences" does — keeps a straight left
+   edge instead of running back under the swatch. */
+.clothValue {
+  display: grid;
+  grid-template-columns: 10px minmax(0, 1fr);
+  column-gap: 9px;
+  align-items: start;
+}
+
+/* The department's own dye, straight off CLOTH. No dye-lot drift: the drift is
+   per-book decoration on the shelf, and what this identifies is the department.
+   The hairline is the same one every object on this ground carries — a drop
+   shadow is invisible at #141E17. */
+.cloth {
+  width: 10px;
+  height: 10px;
+  margin-top: 0.36em;
+  box-shadow: inset 0 0 0 1px var(--salon-edge);
+}
+
+/* Newsreader 18.5/1.66 at the 592px measure, the same reading row the sheet
+   uses. */
+.rectoTitle {
+  margin: 0;
+  max-width: 592px;
+  font-family: var(--salon-font-read);
+  font-size: 18.5px;
+  line-height: 1.66;
+  color: var(--salon-ink);
+}
+
+/* --salon-accent is 4.99:1 on --salon-raised. Underlined as well as coloured,
+   because colour alone is not a link. */
+.guide {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-top: 18px;
+  font-family: var(--salon-font-ui);
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--salon-accent);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
+  transition: color var(--dur-ui) var(--ease);
+}
+
+.guide:hover {
+  color: var(--salon-gilt);
+}
+
+.guide:focus-visible {
+  outline: 2px solid var(--salon-accent);
+  outline-offset: 3px;
+  text-decoration: none;
+}
+
+.guideArrow {
+  font-size: 12px;
+}
+
+/* Same recipe as the bookcase's. `overflow: hidden` is load-bearing: without it
+   the nowrap text escapes its 1px box and counts toward scrollable overflow. */
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  border: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  clip-path: inset(50%);
+}
+
+/* ---------------------------------------------------------------------------
+   Narrow viewports. The row folds to two lines and the spread stacks, which
+   turns the gutter falloff 90deg — the same two gradients, rotated, so the
+   binding still reads between the two pages.
+   --------------------------------------------------------------------------- */
+
+@media (max-width: 780px) {
+  .catalogue {
+    padding: 0 20px 56px;
+  }
+
+  /* Scoped under `.volume` to match the base rule. A media query adds no
+     specificity, so a bare `.face` here would lose to the two-class rule above
+     and the narrow layout would never apply. */
+  .volume .face {
+    grid-template-columns: auto 26px minmax(0, 1fr);
+    row-gap: 3px;
+    padding-right: 8px;
+  }
+
+  .code {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .gilt {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .semester {
+    grid-column: 3;
+    grid-row: 1;
+  }
+
+  .title {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+
+  .spread {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .verso {
+    padding: 22px 20px 0;
+  }
+
+  .recto {
+    padding: 0 20px 24px;
+  }
+
+  .gutter {
+    height: 47px;
+    background-image:
+      linear-gradient(
+        180deg,
+        rgba(8, 14, 10, 0) 0%,
+        rgba(8, 14, 10, 0.14) 26%,
+        rgba(8, 14, 10, 0.4) 44%,
+        rgba(8, 14, 10, 0.5) 50%,
+        rgba(8, 14, 10, 0.4) 56%,
+        rgba(8, 14, 10, 0.14) 74%,
+        rgba(8, 14, 10, 0) 100%
+      ),
+      linear-gradient(
+        180deg,
+        transparent calc(50% - 0.5px),
+        rgba(8, 14, 10, 0.72) calc(50% - 0.5px),
+        rgba(8, 14, 10, 0.72) calc(50% + 0.5px),
+        transparent calc(50% + 0.5px)
+      );
+  }
+}

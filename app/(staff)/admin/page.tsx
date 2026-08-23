@@ -112,9 +112,17 @@ export default async function Cabinet() {
                 href={e.href}
                 className={`group flex h-full items-start gap-4 px-5 py-5 salon-focus ${PLATE_INTERACTIVE}`}
               >
+                {/* Not --salon-subtle. The card lifts to --salon-raised on
+                    hover and focus-within, where #71857A measures 2.79:1 — and
+                    it is only 4.35:1 on the plate at rest, under the 4.5:1 this
+                    11px counts as. #9DAFA4 is 7.41:1 on the plate and 4.76:1 on
+                    raised, clearing both states, and stays 2.06:1 off
+                    --salon-ink so the ordinal is still plainly the quieter of
+                    the two. Same value Catalogue.module.css settled on for the
+                    same reason. */}
                 <span
                   aria-hidden="true"
-                  className="pt-0.5 text-[11px] tabular-nums text-salon-subtle"
+                  className="pt-0.5 text-[11px] tabular-nums text-[#9DAFA4]"
                   style={MONO}
                 >
                   {String(i + 1).padStart(2, '0')}

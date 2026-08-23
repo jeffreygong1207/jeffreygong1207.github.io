@@ -1,4 +1,6 @@
 import Bookcase from '@/components/staff/Bookcase'
+import Catalogue from '@/components/staff/Catalogue'
+import VitrineEscape from '@/components/staff/VitrineEscape'
 import styles from '@/components/staff/Bookcase.module.css'
 import { SHELVES, TOTAL_VOLUMES } from '@/lib/coursework'
 
@@ -19,6 +21,19 @@ export const metadata = { title: 'Coursework', robots: { index: false, follow: f
  * The header states what the page holds and decodes the one visual encoding a
  * reader cannot infer. It does not narrate the affordances, editorialise about
  * the data, or explain what the objects deliberately do not do.
+ *
+ * TWO SURFACES, ONE PLATE. The case is the object; the catalogue is the reading
+ * surface, and it is a SIBLING of the case, never a wrapper around it. The
+ * catalogue's Vitrine panels animate their height, which needs
+ * `overflow: hidden`, and overflow silently forces `transform-style: flat` on
+ * whatever carries it — a shelf has already been flattened on this project that
+ * exact way. Nothing in the catalogue subtree is 3D and nothing in it is an
+ * ancestor of anything that is.
+ *
+ * One `VitrineEscape` for the whole page: the volumes are a single group, and
+ * the component draws nothing and gates nothing. It hands Escape and focus
+ * return to the group, and if its chunk never loads the face is still the
+ * toggle.
  */
 export default function CourseworkPage() {
   return (
@@ -40,7 +55,10 @@ export default function CourseworkPage() {
 
       <div className="salon-plate">
         <Bookcase />
+        <Catalogue />
       </div>
+
+      <VitrineEscape group="coursework" />
     </div>
   )
 }

@@ -88,7 +88,7 @@
 
 /* A miniature of the GILT headband — the legend sentence names the gilt one, so
    the swatch has to be that one and not the blind-stamped stripe the other 26
-   carry. Same gradient as `.spine:has(.guideLink) .headband` below. */
+   carry. Same gradient as `.spine.gilt .headband` below. */
 .legendSwatch {
   flex: none;
   width: 30px;
@@ -119,6 +119,42 @@
      MOTION note at the top of the file for why each var() carries a literal. */
   --ease: var(--salon-ease, cubic-bezier(0.25, 1, 0.5, 1));
   --dur-ui: var(--salon-dur-ui, 240ms);
+
+  /*
+    The three amounts the shelf choreography is made of, resolved here so the
+    spine rules below read as intent rather than as arithmetic.
+
+    --raise and --forward are MULTIPLES of --salon-lift rather than literals,
+    which is the whole point: globals.css sets that token to 0px under reduced
+    motion, so both collapse at the source and not merely by having their
+    transition removed.
+
+    --raise is 3.5 x 4px = 14px, and it is the whole of the visible travel.
+
+    --forward is deliberately SMALL — 2 x 4px = 8px — and it is not a scale
+    cue; at 3200px of perspective 8px of depth is +0.23% and nobody sees it.
+    Its job is the depth SORT: a neighbour leaning toward this volume has to
+    pass behind it, and coplanar siblings sort by document order, which would
+    put the right-hand neighbour in front. 8px settles that.
+
+    A depth move big enough to be felt as depth cannot be hovered. Hit-testing
+    follows the PROJECTED box, and on a case turned -21deg a forward move
+    carries the box sideways: 64px of depth moves it up to 27.4px across, while
+    the seven narrowest volumes project to 16.8px wide. The pointer ends up in
+    the gap, the volume falls back, the pointer is over it again — an
+    oscillation at exactly the transition duration. It cannot be compensated by
+    translating back, either: the perspective divide expands radially about
+    .stage's perspective-origin, so the residual still runs to 6.2px and is
+    signed by where on the shelf the volume stands. 8px keeps the worst case at
+    3.4px, inside the narrowest spine, at every position on every shelf.
+
+    --nudge is an angle and has no token to inherit the zeroing from, so it is
+    the one amount this file has to stand down itself. See the reduced-motion
+    block at the foot of the file.
+  */
+  --raise: calc(-3.5 * var(--salon-lift, 4px));
+  --forward: calc(2 * var(--salon-lift, 4px));
+  --nudge: 3.5deg;
 
   overflow-x: auto;
   padding-block-start: 56px;
@@ -264,17 +300,34 @@
    A spine
    --------------------------------------------------------------------------- */
 
+/*
+  THE FOUR-PART TRANSFORM, and why it is one declaration rather than four rules.
+
+    --lean   rule 14, set inline. 0deg on 35 volumes, 3-7deg on the other four.
+    --tilt   the neighbour's answer when the volume beside this one comes out.
+    --lift   this volume rising off the board.
+    --z      this volume coming forward off the shelf face.
+
+  transform-origin is `bottom center`, so lean and tilt both pivot on the board
+  the way a book actually falls — the foot stays put and the head sweeps. At
+  h=208 a 3.5deg tilt sweeps the head 12.7px sideways and costs 0.39px of
+  height, which is why the neighbours can move at all without the row reflowing:
+  a transform is not layout.
+
+  translateZ is last so it reads in the volume's own frame after the pivot. It
+  is safe here because every ancestor up to .case keeps `transform-style:
+  preserve-3d` and .spine itself does NOT — its own children are overlays that
+  belong flat in its face, and `.type` carries the `overflow: hidden` that would
+  otherwise flatten a 3D subtree.
+*/
 .spine {
   position: relative;
   width: var(--w);
   height: var(--h);
   flex-shrink: 0;
   transform-origin: bottom center;
-  /* Rule 14. --lean is 0deg on the 35 upright volumes; --lift is the pointer /
-     keyboard response on the 13 that link out, taken from --salon-lift so it is
-     the same 4px every other control in the staff area moves — and so reduced
-     motion zeroes it at the token rather than merely removing its transition. */
-  transform: rotate(var(--lean, 0deg)) translateY(var(--lift, 0px));
+  transform: rotate(calc(var(--lean, 0deg) + var(--tilt, 0deg))) translateY(var(--lift, 0px))
+    translateZ(var(--z, 0px));
   transition: transform var(--dur-ui) var(--ease);
 }
 
@@ -405,12 +458,14 @@
   headband; the spec overrides it, and the legend on the page asserts the
   distinction in words, so the CSS has to draw it.
 
-  Selected off `.guideLink`, which Bookcase.tsx renders only when guideId is
-  non-null — the same single source of truth that decides the gilt foil, so the
-  headband can never disagree with the title it sits above. The two stops are
-  the gilt foil's own highlight and shadow (#F2DC9E / #6B5324); no new colour.
+  Selected off `.gilt`, which Bookcase.tsx sets only when guideId is non-null —
+  the same single source of truth that decides the gilt foil, so the headband
+  can never disagree with the title it sits above. It used to hang off the Drive
+  anchor, which no longer exists as a per-volume distinction: every volume now
+  carries the same spine anchor. The two stops are the gilt foil's own highlight
+  and shadow (#F2DC9E / #6B5324); no new colour.
 */
-.spine:has(.guideLink) .headband {
+.spine.gilt .headband {
   background: repeating-linear-gradient(90deg, #f2dc9e 0 1.5px, #6b5324 1.5px 3px);
 }
 
@@ -505,29 +560,82 @@
 }
 
 /* ---------------------------------------------------------------------------
-   The 13 that link out
+   All 39, reachable
    --------------------------------------------------------------------------- */
 
 /*
-  A real focusable DOM element covering the whole spine (§3). It carries the
+  ONE anchor per volume, covering the whole spine (§3). It carries the
   accessible name and nothing visible, so the foil underneath is untouched.
-  The other 26 spines have no interactive element at all — no tabindex, no
-  hover affordance — because they have nothing to open.
+
+  This used to exist on 13 of the 39 — the ones holding a Drive file — which
+  left 26 volumes with no interactive element at all: no tab stop, no pointer
+  affordance, no hover state. The whole case exposed 13 tab stops, every one of
+  them a trip off the page. Now every spine has exactly one anchor with exactly
+  one job: point at this volume's entry in the catalogue below.
+
+  The seven narrowest volumes are 18-20px wide, and ~17px after the case's -21deg
+  turn, so as pointer targets they are under 24x24 on their own. What makes that
+  acceptable is not this element: it is that the catalogue row does the same job
+  at full width, on the same page.
 */
-.guideLink {
+.spineLink {
   position: absolute;
   inset: 0;
+  /*
+    The hit box is --raise TALLER than the spine, downward, and that is what
+    makes the lift flicker-free. Raise a volume 14px and the bottom 14px of its
+    own hit box leaves the pointer behind: hover drops, the volume falls, the
+    pointer is over it again. Overhanging the foot by exactly the lift means the
+    box's bottom edge lands back on the foot line it started from, so a pointer
+    anywhere inside the spine at rest is still inside it once it is up.
+
+    `inset: 0` stays as its own declaration above. If `--raise` ever fails to
+    resolve, this line drops and the anchor is merely spine-sized — still there,
+    still reachable. A single `inset` shorthand carrying the var would take all
+    four edges down with it and leave a zero-sized anchor.
+
+    At rest the overhang lies under `.board`, which paints over it, so it grabs
+    nothing it should not. Once lifted the spine is --forward in front of the
+    board and the overhang is live, which is the only moment it is needed.
+  */
+  bottom: var(--raise, 0px);
   z-index: 2;
   display: block;
   border-radius: 2px;
 }
 
-.spine:has(.guideLink:hover),
-.spine:has(.guideLink:focus-visible) {
-  --lift: calc(-1 * var(--salon-lift, 4px));
+/*
+  THE CHOREOGRAPHY. A volume answers the pointer by coming out of the shelf, and
+  its two neighbours answer by leaning into the space it left.
+
+  The realism is in the GAP, not in a hinge. Real books on a real shelf lean
+  because the book between them left; they lean PARTWAY, held up by each other
+  and by the friction of the board. Full closure is the tell, so 3.5deg each is
+  about 25px of a gap that is 18-72px wide depending on which volume moved.
+
+  Hover and focus are read off the ANCHOR rather than off the <li>, because the
+  anchor's box is the one that overhangs the foot — see .spineLink above. There
+  is no `:has()` inside a `:has()` anywhere below: that nesting is invalid, so
+  the previous-sibling rule reaches the anchor through a descendant combinator
+  and folds the two states together with `:is()`.
+*/
+.spine:has(.spineLink:is(:hover, :focus-visible)) {
+  --lift: var(--raise);
+  --z: var(--forward);
 }
 
-.guideLink:focus-visible {
+/* The volume to the RIGHT tips its head left, into the gap. */
+.spine:has(.spineLink:is(:hover, :focus-visible)) + .spine {
+  --tilt: calc(-1 * var(--nudge));
+}
+
+/* The volume to the LEFT tips its head right, into the same gap. CSS has no
+   previous-sibling combinator; `:has(+ ...)` is how you spell one. */
+.spine:has(+ .spine .spineLink:is(:hover, :focus-visible)) {
+  --tilt: var(--nudge);
+}
+
+.spineLink:focus-visible {
   outline: 2px solid var(--salon-accent);
   outline-offset: 3px;
 }
@@ -548,4 +656,24 @@
   overflow: hidden;
   white-space: nowrap;
   clip-path: inset(50%);
+}
+
+/* ---------------------------------------------------------------------------
+   Reduced motion
+   --------------------------------------------------------------------------- */
+
+/*
+  The shared sweep in globals.css already zeroes --salon-lift, which stands
+  --raise and --forward down at the source rather than merely stripping their
+  transition. --nudge is an angle and has no shared token to inherit that from,
+  so it is the one amount this file has to zero itself.
+
+  Nothing is hidden here and nothing is disabled. The spine anchors keep working,
+  the catalogue entry still opens, and the focus ring is the whole of the
+  feedback — which is the correct answer, not a degraded one.
+*/
+@media (prefers-reduced-motion: reduce) {
+  .viewport {
+    --nudge: 0deg;
+  }
 }

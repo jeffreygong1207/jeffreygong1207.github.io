@@ -1,26 +1,45 @@
 import { PROJECTS, catalogueNumber, projectLinks, type Project } from '@/lib/projects'
 import { COVERS, Cover } from './covers'
 import { accent, deep, ink } from './covers/ring'
+import Vitrine, { vitrineId } from './Vitrine'
+import VitrineEscape from './VitrineEscape'
 import styles from './Crate.module.css'
 
 /**
- * THE CRATE — spec 2.3. Eleven projects as vinyl packshots.
+ * THE CRATE — spec 2.3. Eleven projects as vinyl packshots, each one a Vitrine
+ * that opens in place: the disc slides out of the jacket and the panel below it
+ * carries the description, the technologies and the way out to the project.
  *
- * A server component on purpose: there is no motion here to gate, so there is
- * no client bundle, no hydration, and every interactive object is a real anchor
- * in the server-rendered HTML. `useReducedMotion` is for autonomous motion;
- * the only movement in this surface is a hover colour and shadow change, which
- * the shared `prefers-reduced-motion` block in globals.css already flattens.
+ * Still a server component. The one client boundary on the surface is
+ * `VitrineEscape`, which binds Escape-to-close and hands focus back to the face
+ * it came from. It renders nothing and gates no visible state — every packshot
+ * opens, closes and reveals its panel with the stylesheet alone, so a dead
+ * bundle costs the keyboard shortcut and nothing else.
  *
- * Zero rotation, zero perspective, no `transform-style: preserve-3d` anywhere
- * in this subtree — so none of the flattening hazards in spec 3 apply and the
- * sleeve is free to use `overflow: hidden` (which it must, for the artwork) and
- * `isolation: isolate` (which it must, to keep the blend modes local).
+ * The open state is the native `[open]` attribute and the travel is derived
+ * from `--vitrine-open` in calc(). No keyframes for the slide, no measurement,
+ * no ResizeObserver. The one @keyframes here is the 33 1/3 rpm rotation the
+ * disc pays AFTER it lands, and it is gated on `prefers-reduced-motion`.
+ *
+ * Zero rotateY, zero perspective, no `transform-style: preserve-3d` anywhere in
+ * this subtree — the disc's pose is a 2D translate plus a 2D rotate — so none of
+ * the flattening hazards in spec 3 apply and the sleeve is free to use
+ * `overflow: hidden` (which it must, for the artwork) and `isolation: isolate`
+ * (which it must, to keep the blend modes local).
  */
+
+/**
+ * One `name` for all eleven, so the browser closes the open record when the
+ * next one is asked for. Where the exclusive-accordion behaviour of `name` is
+ * unsupported the group simply allows several open at once.
+ */
+const GROUP = 'crate'
+
 export default function Crate() {
   return (
     <div className={styles.page}>
       <CrateFilters />
+      <VitrineEscape group={GROUP} />
 
       {/* States what the page holds. It does not describe the label system that
           draws it — that rationale is spec 2.3 and belongs in the spec. */}
@@ -122,36 +141,63 @@ function Packshot({ project, index }: { project: Project; index: number }) {
   const spec = COVERS[index]
   const catalogue = catalogueNumber(index)
   const { primary, secondary } = projectLinks(project)
+  // Both destinations now live in the panel, so the split that kept the second
+  // one out of the packshot anchor collapses back into one list. Five of eleven
+  // have anything here at all; the rest render no list and no placeholder.
+  const links = primary ? [primary, ...secondary] : []
 
-  const shot = (
+  /**
+   * THE FACE — the object. Everything inside it is decorative and aria-hidden
+   * except the meta line, which is where the accessible name of the record
+   * lives. No interactive element may appear here: a link inside a <summary>
+   * is invalid and unreachable, which is why the destinations are in the panel.
+   */
+  const face = (
     <>
       <div className={styles.stage}>
         <div className={styles.shadow} aria-hidden="true" />
 
-        {/* Disc: 0.9596 of the jacket, top 0.0202, slid right by exactly one
-            radius, BEHIND the sleeve. Better than half of it is occluded, which
-            is the point — the occlusion is the depth cue. Decorative: every
-            word of it is repeated as real text in the meta line below. */}
+        {/* Disc: 0.9596 of the jacket, top 0.0202, and at rest slid right by
+            exactly one radius, BEHIND the sleeve. Better than half of it is
+            occluded, which is the point — the occlusion is the depth cue.
+            Three layers, and the split between them is what makes it read as a
+            record rather than as a photograph of one:
+
+              .disc     the pose. Carries the travel, the tilt and the two
+                        shadow lobes, so the shadows travel with the object.
+              .platter  the grooves, the base and the label. Spins inside the
+                        pose once the record has landed.
+              .sheen    the key light. Counter-transformed back into page
+                        space, so rotating the disc does NOT move the highlight
+                        and translating the disc DOES sweep it across the face.
+                        Anisotropic and rotationally symmetric, like real vinyl.
+        */}
         <div className={styles.disc} aria-hidden="true">
-          <div
-            className={styles.label}
-            style={{
-              // Held on the accent for the first 42% so the L20 ink stays legible
-              // right across the visible face, then dropping to deep past the rim.
-              background: `radial-gradient(circle at 42% 34%, ${accent(index)} 0%, ${accent(index)} 42%, ${deep(index)} 118%)`,
-            }}
-          >
-            {/* The catalogue number, not the project name: a label face is
-                90px across here and 'NASA Techrise Challenge - ORBS' is 30
-                characters. Clipped type is a cheap-render tell, and a real
-                label carries its catalogue number anyway. */}
-            <span className={styles.labelTitle} style={{ color: ink(index) }}>
-              {catalogue}
-            </span>
-            <span className={styles.hole} />
-            <span className={styles.labelSide} style={{ color: ink(index), opacity: 0.72 }}>
-              SIDE A · {spec.year}
-            </span>
+          <div className={styles.platter}>
+            <div
+              className={styles.label}
+              style={{
+                // Held on the accent for the first 42% so the L20 ink stays legible
+                // right across the visible face, then dropping to deep past the rim.
+                background: `radial-gradient(circle at 42% 34%, ${accent(index)} 0%, ${accent(index)} 42%, ${deep(index)} 118%)`,
+              }}
+            >
+              {/* The catalogue number, not the project name: a label face is
+                  90px across here and 'NASA Techrise Challenge - ORBS' is 30
+                  characters. Clipped type is a cheap-render tell, and a real
+                  label carries its catalogue number anyway. */}
+              <span className={styles.labelTitle} style={{ color: ink(index) }}>
+                {catalogue}
+              </span>
+              <span className={styles.hole} />
+              <span className={styles.labelSide} style={{ color: ink(index), opacity: 0.72 }}>
+                SIDE A · {spec.year}
+              </span>
+            </div>
+          </div>
+
+          <div className={styles.sheen}>
+            <div className={styles.sheenLight} />
           </div>
         </div>
 
@@ -188,44 +234,49 @@ function Packshot({ project, index }: { project: Project; index: number }) {
 
   return (
     <article className={styles.shot}>
-      {primary ? (
-        <a
-          className={styles.link}
-          href={primary.href}
-          target="_blank"
-          rel="noopener noreferrer"
-          // The sleeve is covered in artwork type, so the link is named
-          // explicitly rather than by concatenating everything inside it.
-          aria-label={`${project.title} — ${primary.label} (opens in a new tab)`}
-        >
-          {shot}
-        </a>
-      ) : (
-        // Six of eleven have no links. Not an anchor, not focusable, no hover
-        // response — nothing about it suggests it can be activated. These are
-        // also the six cards with no aria-label, which is why every text node
-        // inside .stage has to be aria-hidden: whatever a cover prints would
-        // otherwise be read out verbatim here at 4-6px on screen.
-        <div className={styles.plain}>{shot}</div>
-      )}
+      <Vitrine
+        id={vitrineId('rec', project.title)}
+        group={GROUP}
+        kind="record"
+        className={styles.record}
+        faceClassName={styles.face}
+        face={face}
+      >
+        <div className={styles.detail}>
+          <p className={styles.note}>{project.description}</p>
 
-      {secondary.length > 0 ? (
-        <ul className={styles.extras}>
-          {secondary.map((link) => (
-            <li key={link.href}>
-              <a
-                className={styles.extra}
-                href={link.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label={`${project.title} — ${link.label} (opens in a new tab)`}
-              >
-                {link.label}
-              </a>
-            </li>
-          ))}
-        </ul>
-      ) : null}
+          {project.technologies.length > 0 ? (
+            <ul className={styles.tech}>
+              {project.technologies.map((tech) => (
+                <li key={tech} className={styles.techItem}>
+                  {tech}
+                </li>
+              ))}
+            </ul>
+          ) : null}
+
+          {links.length > 0 ? (
+            <ul className={styles.outbound}>
+              {links.map((link) => (
+                <li key={link.href}>
+                  <a
+                    className={styles.out}
+                    href={link.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    // The visible label is two words and there are eleven cards,
+                    // so the accessible name carries the record it belongs to.
+                    // It contains the visible string verbatim (SC 2.5.3).
+                    aria-label={`${project.title} — ${link.label} (opens in a new tab)`}
+                  >
+                    {link.label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+        </div>
+      </Vitrine>
     </article>
   )
 }

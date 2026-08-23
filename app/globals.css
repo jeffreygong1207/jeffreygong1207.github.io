@@ -477,3 +477,73 @@ body:has(.salon-shell .salon-sheet) {
    it: declare the final state unconditionally, put the transition and the
    `@starting-style` inside `prefers-reduced-motion: no-preference`, and never
    let opacity 0 be the declared state. */
+
+
+/* ===========================================================================
+   THE VITRINE — the shared open-in-place object.
+
+   components/staff/Vitrine.tsx renders a native `<details>` carrying
+   `.salon-vitrine`. Three things live here and nothing else does, because
+   these three cannot live in a module: an `@property` registration is
+   document-scoped by definition, and the scalar and the durations are the
+   published interface every consuming surface derives from. All of the
+   primitive's geometry is in components/staff/Vitrine.module.css, and feature
+   CSS still belongs in co-located modules — nothing about this section reopens
+   the frozen block above.
+
+   THE SCALAR. `--vitrine-open` runs 0 -> 1 across the open transition and
+   inherits, so a consumer derives every transform from it in calc() and never
+   writes a keyframe:
+
+     translate: calc(var(--vitrine-open, 1) * 140px) 0;
+
+   Registration is the entire mechanism. An unregistered custom property is an
+   untyped token: it switches from `0` to `1` without passing through anything
+   in between, and every consumer's calc() would jump rather than travel — with
+   no error anywhere to say why. Registered as a `<number>`, it interpolates.
+
+   The var() fallback above is 1, not 0. This file has gone missing from a
+   build once already. If it does again, the object lands OPENED rather than
+   held shut by a scalar that never arrives.
+
+   DURATIONS. Open is 420ms and close is 240ms — 1.75x — because by the time
+   someone closes an object they have already read it; the same asymmetry the
+   house UI/slow tokens already carry. Both resolve through `--salon-*`, so the
+   `reduce` block above zeroes them at source, and both carry their measured
+   value as a var() fallback.
+
+   Inert on every public route: `.salon-vitrine` only ever exists under
+   app/(staff)/, and the property registration paints nothing on its own.
+   =========================================================================== */
+
+@property --vitrine-open {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0;
+}
+
+.salon-vitrine {
+  --vitrine-open: 0;
+  --vitrine-ease: var(--salon-ease, cubic-bezier(0.25, 1, 0.5, 1));
+  --vitrine-dur-open: var(--salon-dur-slow, 420ms);
+  --vitrine-dur-close: var(--salon-dur-ui, 240ms);
+}
+
+.salon-vitrine[open] {
+  --vitrine-open: 1;
+}
+
+/* The state declarations above are unconditional; only the travel between them
+   is conditional. Under `reduce` the scalar still flips to 1 on open, so every
+   consumer's derived transform lands on its opened value immediately — the
+   object opens, it just does not move on the way. */
+@media (prefers-reduced-motion: no-preference) {
+  .salon-vitrine {
+    transition: --vitrine-open var(--vitrine-dur-close, var(--salon-dur-ui, 240ms))
+      var(--vitrine-ease, var(--salon-ease, cubic-bezier(0.25, 1, 0.5, 1)));
+  }
+
+  .salon-vitrine[open] {
+    transition-duration: var(--vitrine-dur-open, var(--salon-dur-slow, 420ms));
+  }
+}

@@ -1,4 +1,5 @@
-import { SHELVES, guideUrl, type Volume } from '@/lib/coursework'
+import { SHELVES, type Volume } from '@/lib/coursework'
+import { vitrineId } from './Vitrine'
 import styles from './Bookcase.module.css'
 
 /**
@@ -10,8 +11,24 @@ import styles from './Bookcase.module.css'
  * Deliberately a server component. The geometry is static, there is no pointer
  * parallax and no autonomous drift, so there is nothing to gate on
  * components/staff/useReducedMotion.ts — the only motion is the hover/focus
- * lift on the 13 links, which is a CSS transition and is already handled by the
- * shared `prefers-reduced-motion` block in globals.css.
+ * response on the spines, which is a CSS transition sized off --salon-lift and
+ * is already handled by the shared `prefers-reduced-motion` block in
+ * globals.css.
+ *
+ * NOTHING OPENS ON THE SHELF. No panel is rendered here and --vitrine-open is
+ * not read anywhere in this file. A spine is a pointer: it carries one anchor
+ * to its own entry in the catalogue below the case, which is where a volume
+ * opens. A height-animating panel needs `overflow: hidden`, and overflow
+ * silently forces `transform-style: flat` — putting one anywhere inside the
+ * case would flatten the whole thing, which this project has already paid for
+ * once.
+ *
+ * The foil title is DECORATIVE, at the same status the course code has always
+ * held: it is set at the angular size 5mm spine type really has at reading
+ * distance, which is a recognition cue and not a reading surface. Nothing on
+ * the page asks anyone to read it, and the full string is live text both in
+ * .srOnly here and in the catalogue. That is why the clamp below is not the
+ * lever for legibility and is not touched.
  *
  * There is no grain overlay here. The staff layout ships the single
  * screen-space one for the whole area (rule 16); per-object grain rasterises at
@@ -220,8 +237,17 @@ function spineVars(volume: Volume): React.CSSProperties {
 function Spine({ volume }: { volume: Volume }) {
   const { code, title, shortTitle, guideId } = volume
 
+  /*
+    The gilt headband used to be selected off `.guideLink`, which only the 13
+    existed to carry. That anchor is gone — every volume now carries the same
+    one — so the distinction moves onto a modifier driven by the SAME `guideId`
+    that decides the foil in spineVars. One source of truth, as before; the
+    headband still cannot disagree with the title it sits above.
+  */
+  const className = guideId === null ? styles.spine : `${styles.spine} ${styles.gilt}`
+
   return (
-    <li className={styles.spine} style={spineVars(volume)}>
+    <li className={className} style={spineVars(volume)}>
       <span className={styles.cloth} />
       <span className={styles.hingeLeft} />
       <span className={styles.hingeRight} />
@@ -243,24 +269,23 @@ function Spine({ volume }: { volume: Volume }) {
         </span>
       </span>
 
-      {guideId ? (
-        // A real focusable element covering the whole spine, with the accessible
-        // name as text rather than aria-label so it survives translation.
-        <a
-          className={styles.guideLink}
-          href={guideUrl(guideId)}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <span className={styles.srOnly}>
-            {code} &mdash; {title}. Mastery guide PDF, opens in a new tab.
-          </span>
-        </a>
-      ) : (
+      {/*
+        One anchor per volume, covering the whole spine, on ALL 39 — not on the
+        13 that happen to hold a PDF. It targets the volume's own entry in the
+        catalogue below the case: the fragment lands inside a closed <details>,
+        and the HTML "ancestor details revealing" algorithm expands it, so the
+        entry opens with no script running at all.
+
+        The accessible name is real text rather than an aria-label, so it
+        survives translation, and it stays the full catalogue title — the foil
+        above it is an abbreviation set below reading size and is decorative,
+        exactly as the code beside it already was.
+      */}
+      <a className={styles.spineLink} href={`#${vitrineId('vol', volume.key)}`}>
         <span className={styles.srOnly}>
           {code} &mdash; {title}
         </span>
-      )}
+      </a>
     </li>
   )
 }

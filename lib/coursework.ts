@@ -153,6 +153,40 @@ const COURSE_CLOTH: Readonly<Record<string, ClothKey>> = {
 }
 
 /**
+ * Berkeley's subject-area names, for the catalogue row.
+ *
+ * Keyed on the course-code prefix and NOT on ClothKey, which is a different
+ * question with a different answer: cloth folds STAT into DATA and COMLIT into
+ * HUM so nine dyes cover thirty-nine books, and binds COMPSCI 195 in humanities
+ * cloth. Binding is a material decision. The subject is a fact about the
+ * course, so STAT 20 reads Statistics and COMPSCI 195 reads Computer Science.
+ *
+ * ClothKey has no MATH course today, so no MATH entry exists here either; an
+ * unmapped prefix falls back to the prefix itself, which is at least true.
+ */
+const DEPARTMENT: Readonly<Record<string, string>> = {
+  COMPSCI: 'Computer Science',
+  EECS: 'Electrical Engineering and Computer Sciences',
+  UGBA: 'Business Administration',
+  ECON: 'Economics',
+  DATA: 'Data Science',
+  STAT: 'Statistics',
+  PHYSICS: 'Physics',
+  COMLIT: 'Comparative Literature',
+  ELENG: 'Electrical Engineering',
+}
+
+/** Course codes are `PREFIX NUMBER`; the number is a string, never a number. */
+function codePrefix(code: string): string {
+  const at = code.indexOf(' ')
+  return at === -1 ? code : code.slice(0, at)
+}
+
+export function departmentName(code: string): string {
+  return DEPARTMENT[codePrefix(code)] ?? codePrefix(code)
+}
+
+/**
  * MATH is defined by the palette but no course carries it today. It is the
  * fallback so a future course with an unmapped prefix still renders as a book
  * rather than as an unstyled rectangle.

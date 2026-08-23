@@ -1,0 +1,130 @@
+/* ===========================================================================
+   THE VITRINE — geometry for components/staff/Vitrine.tsx.
+
+   Consumers do not import this file and do not need to read it. Everything a
+   consumer touches is documented at the top of Vitrine.tsx: the `[open]`
+   attribute, the `--vitrine-*` custom properties, and their own className on
+   the <details>.
+
+   Every selector here is anchored to a hashed module class, `.root` included.
+   A bare `details` selector in a module is not scoped and would reach every
+   <details> on every public route; `.root::details-content` cannot.
+
+   HEIGHT, WITHOUT `interpolate-size`. `interpolate-size: allow-keywords` is
+   Chromium-only — no Safari, no Firefox — so `height: auto` is not animatable
+   here. The panel is a one-row grid instead: the row runs `1fr` -> `0fr` and
+   the single child clips itself. That interpolates everywhere, and it needs no
+   measurement, no ResizeObserver and no script.
+
+   THE MOTION INVARIANT (app/globals.css). The open state is the plain
+   unconditional declaration. The collapsed state and every transition sit
+   inside `prefers-reduced-motion: no-preference`. Under `reduce` the object
+   still opens — it just arrives. No visible state is gated on a `transitionend`
+   and nothing here sets `opacity` or `display` on content.
+   =========================================================================== */
+
+.root {
+  display: block;
+}
+
+/* THE FACE. `display: block` plus `list-style: none` retires the disclosure
+   triangle in Gecko and Blink; the `::-webkit-details-marker` rule retires it
+   in older WebKit. The summary stays natively focusable and natively
+   activatable by Enter and Space — the ring is `.salon-focus`, applied by the
+   component, which already follows both the dark plate and the light sheet.
+   The scroll margin is for the fragment landing: `#id` on a summary scrolls the
+   object to the top edge of the viewport otherwise. */
+.face {
+  display: block;
+  list-style: none;
+  cursor: pointer;
+  scroll-margin-block: 24px;
+}
+
+.face::-webkit-details-marker {
+  display: none;
+}
+
+.face::marker {
+  content: "";
+}
+
+/* THE PANEL. `1fr` is unconditional and `0fr` is scoped to `:not([open])`,
+   which is exactly the state in which the browser hides the content on its own
+   — so the collapsed row can never be what a reader is left looking at. */
+.panel {
+  display: grid;
+  grid-template-rows: 1fr;
+}
+
+.root:not([open]) > .panel {
+  grid-template-rows: 0fr;
+}
+
+/* The grid item has to be able to reach zero (`min-height: 0`) and has to clip
+   itself on the way (`overflow: hidden`). Note the second one forces
+   `transform-style: flat` on this element: a preserve-3d chain must never run
+   through a panel. Objects that live in a 3D scene put their Vitrine beside
+   the scene, not inside it. */
+.panelInner {
+  min-height: 0;
+  overflow: hidden;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .panel {
+    transition: grid-template-rows
+      var(--vitrine-dur-close, var(--salon-dur-ui, 240ms))
+      var(--vitrine-ease, var(--salon-ease, cubic-bezier(0.25, 1, 0.5, 1)));
+  }
+
+  .root[open] > .panel {
+    transition-duration: var(--vitrine-dur-open, var(--salon-dur-slow, 420ms));
+  }
+
+  /* The open half. On a browser without `::details-content` the panel goes
+     from unrendered to rendered, so there is no previous value to interpolate
+     from and the transition above has nothing to run; `@starting-style`
+     supplies one. Where it is unsupported the panel snaps open — content
+     visible, no animation. */
+  @starting-style {
+    .root[open] > .panel {
+      grid-template-rows: 0fr;
+    }
+  }
+
+  /* The close half. `::details-content` carries `content-visibility` from the
+     UA stylesheet, and switching it is what yanks the content out from under
+     the closing transition. Only the transition is declared here — never the
+     value — so this rule can delay the hide and can never cause one. */
+  .root::details-content {
+    transition: content-visibility
+      var(--vitrine-dur-close, var(--salon-dur-ui, 240ms)) allow-discrete;
+  }
+
+  .root[open]::details-content {
+    transition-duration: var(--vitrine-dur-open, var(--salon-dur-slow, 420ms));
+  }
+
+  /* PANEL CONTENT settles 120ms behind the object at 300ms, so the two land
+     together at 420ms. `translate` rather than `transform`, so a consumer's own
+     transform on the same child composes instead of colliding. Never opacity:
+     the content is opaque on frame 0 and only ever moves. Set
+     `--vitrine-stagger-index` per child to ladder them. */
+  .panelInner > * {
+    transition: translate var(--salon-dur-reveal, 300ms)
+      var(--vitrine-ease, var(--salon-ease, cubic-bezier(0.25, 1, 0.5, 1)))
+      calc(120ms + var(--salon-stagger, 20ms) * var(--vitrine-stagger-index, 0));
+  }
+
+  .root:not([open]) > .panel .panelInner > * {
+    translate: 0 6px;
+    transition-delay: 0ms;
+  }
+
+  @starting-style {
+    .root[open] > .panel .panelInner > * {
+      translate: 0 6px;
+    }
+  }
+}
