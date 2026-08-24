@@ -11,11 +11,15 @@ type Row = Pick<
   'id' | 'title' | 'subtitle' | 'slug' | 'status' | 'published_at' | 'updated_at' | 'reading_minutes' | 'tags'
 >
 
-const FILTERS: { key: string; label: string; status?: PostStatus }[] = [
-  { key: 'all', label: 'All' },
-  { key: 'published', label: 'Published', status: 'published' },
-  { key: 'draft', label: 'Drafts', status: 'draft' },
-  { key: 'unlisted', label: 'Unlisted', status: 'unlisted' },
+// `empty` is written out rather than derived from `label`. The empty state used
+// to say `No ${label.toLowerCase()}.`, which reads "No drafts." for one tab and
+// "No published." and "No unlisted." for two others — a tab name run through
+// toLowerCase(), not a sentence anybody would write.
+const FILTERS: { key: string; label: string; status?: PostStatus; empty: string }[] = [
+  { key: 'all', label: 'All', empty: 'written yet' },
+  { key: 'published', label: 'Published', status: 'published', empty: 'published yet' },
+  { key: 'draft', label: 'Drafts', status: 'draft', empty: 'in draft' },
+  { key: 'unlisted', label: 'Unlisted', status: 'unlisted', empty: 'unlisted' },
 ]
 
 // Status carries a text label everywhere it appears, so the colour is a second
@@ -88,8 +92,11 @@ export default async function PostsIndex({
       <header className="mb-8 flex flex-wrap items-end justify-between gap-x-8 gap-y-4">
         <div>
           <h1 className="salon-h1">Posts</h1>
+          {/* The stat tiles below already state published/drafts/unlisted, and
+              the tab strip states them a third time. One statement of the
+              counts on this page is enough; this line says the total instead. */}
           <p className="salon-label mt-4">
-            {`${counts.published} published · ${counts.draft} draft${counts.draft === 1 ? '' : 's'}`}
+            {error ? '— posts' : `${all.length} post${all.length === 1 ? '' : 's'}`}
           </p>
         </div>
         <form action={createPost}>
@@ -129,10 +136,8 @@ export default async function PostsIndex({
       {rows.length === 0 ? (
         <p className={`px-6 py-16 text-center text-sm text-salon-muted ${PLATE}`}>
           {error
-            ? 'Could not reach the cabinet. The posts are there; this screen is not.'
-            : active.key === 'all'
-              ? 'Nothing written yet.'
-              : `No ${active.label.toLowerCase()}.`}
+            ? "Couldn't load your posts. Reload to try again."
+            : `Nothing ${active.empty}.`}
         </p>
       ) : (
         <ul className={PLATE}>

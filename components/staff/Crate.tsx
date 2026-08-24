@@ -197,7 +197,7 @@ function Packshot({ project, index }: { project: Project; index: number }) {
               </span>
               <span className={styles.hole} />
               <span className={styles.labelSide} style={{ color: ink(index), opacity: 0.72 }}>
-                SIDE A · {spec.year}
+                {spec.year}
               </span>
             </div>
           </div>

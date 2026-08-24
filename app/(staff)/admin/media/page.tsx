@@ -81,7 +81,11 @@ export default async function MediaPage() {
         <div>
           <h1 className="salon-h1">Media</h1>
           <p className="salon-label mt-4">
-            {`${assets.length} image${assets.length === 1 ? '' : 's'} · ${formatBytes(totalBytes)}`}
+            {listError
+              ? '— images'
+              : assets.length === 0
+                ? '0 images'
+                : `${assets.length} image${assets.length === 1 ? '' : 's'} · ${formatBytes(totalBytes)}`}
           </p>
         </div>
       </header>
@@ -91,7 +95,7 @@ export default async function MediaPage() {
         // so it should not draw itself as one.
         <p className="salon-plate px-6 py-16 text-center text-sm text-salon-muted">
           {listError
-            ? 'Could not reach the media store. This is not an empty library.'
+            ? "Couldn't load your media. Reload to try again."
             : 'Nothing uploaded yet. Drag an image into a post and it lands here.'}
         </p>
       ) : (

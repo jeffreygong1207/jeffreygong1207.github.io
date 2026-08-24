@@ -2,7 +2,7 @@ import Bookcase from '@/components/staff/Bookcase'
 import Catalogue from '@/components/staff/Catalogue'
 import VitrineEscape from '@/components/staff/VitrineEscape'
 import styles from '@/components/staff/Bookcase.module.css'
-import { SHELVES, TOTAL_VOLUMES } from '@/lib/coursework'
+import { GUIDE_COUNT, SHELVES, TOTAL_VOLUMES } from '@/lib/coursework'
 
 export const metadata = { title: 'Coursework', robots: { index: false, follow: false } }
 
@@ -40,15 +40,21 @@ export default function CourseworkPage() {
     <div className="salon-wide">
       <header className={styles.header}>
         <h1 className="salon-h1">Coursework</h1>
+        {/* Says what is here, not what the drawing means. This read "39
+            volumes, bound by department and shelved across 4 academic years at
+            Berkeley. Cloth colour is the department." — a caption decoding its
+            own ornament, which is the same habit that once put spec references
+            on the page, in fluent English where the copy gate cannot see it.
+            The reader does not need to learn "cloth" or "headband" to use a
+            list of courses; the count of guides is the fact worth having, and
+            it was already computed and rendered nowhere. */}
         <p className={styles.standfirst}>
-          {TOTAL_VOLUMES} volumes, bound by department and shelved across {SHELVES.length}{' '}
-          academic years at Berkeley. Cloth colour is the department.
+          {TOTAL_VOLUMES} courses across {SHELVES.length} years at Berkeley.
         </p>
         <p className={styles.legend}>
           <span className={styles.legendSwatch} aria-hidden="true" />
           <span>
-            A <span className={styles.legendStrong}>gilt headband</span> marks a course with a
-            mastery guide.
+            {GUIDE_COUNT} have a mastery guide.
           </span>
         </p>
       </header>

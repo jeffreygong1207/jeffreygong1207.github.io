@@ -59,9 +59,13 @@ export default async function Cabinet() {
     {
       href: '/admin/posts',
       name: 'Posts',
-      note: `${counts.published} published · ${plural(counts.draft, 'draft')} · ${counts.unlisted} unlisted`,
+      note: error
+        ? 'Counts unavailable'
+        : `${counts.published} published · ${plural(counts.draft, 'draft')} · ${counts.unlisted} unlisted`,
     },
-    { href: '/admin/media', name: 'Media', note: 'Uploads, covers and stills' },
+        // Was "Uploads, covers and stills" — three names for one thing. There is
+    // one kind of object in that bucket: images attached to posts.
+    { href: '/admin/media', name: 'Media', note: 'Images used in posts' },
     // Coursework / Projects / Experience are static arrays, not Postgres, but
     // they are no longer trapped inside their own surfaces: each one now exports
     // its data from lib/, so these figures are derived rather than transcribed.
@@ -71,7 +75,10 @@ export default async function Cabinet() {
     {
       href: '/admin/coursework',
       name: 'Coursework',
-      note: `${TOTAL_VOLUMES} volumes across ${SHELVES.length} shelves`,
+      // "volumes" and "shelves" are the drawing. The rule four lines above
+      // this array says navigation copy names what is counted so that renaming
+      // the drawing leaves the words true — and this line broke it.
+      note: `${TOTAL_VOLUMES} courses · ${SHELVES.length} years`,
     },
     { href: '/admin/projects', name: 'Projects', note: plural(PROJECTS.length, 'project') },
     {
@@ -89,7 +96,11 @@ export default async function Cabinet() {
           {/* `salon-label` rather than a hand-rolled near-miss of it: this was
               11px at 0.2em where the token is 10px at 0.13em, which made the
               same line read differently on each of five surfaces. */}
-          <p className="salon-label mt-4">{plural(all.length, 'post')}</p>
+          {/* An em dash, not a zero, when the query failed. The error plate
+              below said "nothing here is a real count" while this line said
+              0 POSTS and five section cards said 0 published · 0 drafts — the
+              error branch was refuted by the counts 40px above it. */}
+          <p className="salon-label mt-4">{error ? '— posts' : plural(all.length, 'post')}</p>
         </div>
       </header>
 
@@ -169,7 +180,7 @@ export default async function Cabinet() {
         {drafts.length === 0 ? (
           <p className={`px-5 py-8 text-sm text-salon-muted ${PLATE}`}>
             {error ? (
-              'Could not reach the cabinet. Nothing here is a real count.'
+"Couldn't load your posts. Reload to try again."
             ) : (
               <>
                 Nothing in progress.{' '}

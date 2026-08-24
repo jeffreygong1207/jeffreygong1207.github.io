@@ -95,7 +95,7 @@ export default function PostEditor({ post }: { post: Post }) {
         // the only one.
         protocols: ['http', 'https', 'mailto'],
       }),
-      Placeholder.configure({ placeholder: 'Tell your story…' }),
+      Placeholder.configure({ placeholder: 'Start writing…' }),
     ],
     content: (post.content?.content?.length ? post.content : EMPTY_DOC) as object,
     editorProps: {
