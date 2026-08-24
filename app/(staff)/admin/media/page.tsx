@@ -46,12 +46,18 @@ export default async function MediaPage() {
   const { data: posts } = await supabase.from('posts').select('id, title')
   const titleById = new Map((posts ?? []).map((p) => [p.id, p.title as string]))
 
+  // Each nested listing reports its own failure. Only the top-level list was
+  // captured, so if it succeeded and a per-folder list failed, the page rendered
+  // "Nothing uploaded yet." with no error branch — broken looking exactly like
+  // empty, which is the one confusion this copy exists to prevent.
+  const nestedErrors: string[] = []
   const nested = await Promise.all(
     postFolders.map(async (folder) => {
-      const { data: files } = await bucket.list(folder.name, {
+      const { data: files, error: filesError } = await bucket.list(folder.name, {
         limit: 200,
         sortBy: { column: 'created_at', order: 'desc' },
       })
+      if (filesError) nestedErrors.push(folder.name)
       return (files ?? [])
         .filter((f) => f.id)
         .map((f): Asset => {
@@ -70,6 +76,7 @@ export default async function MediaPage() {
   )
 
   const assets = nested.flat().sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+  const failed = Boolean(listError) || nestedErrors.length > 0
   const totalBytes = assets.reduce((sum, a) => sum + a.size, 0)
 
   return (
@@ -81,7 +88,7 @@ export default async function MediaPage() {
         <div>
           <h1 className="salon-h1">Media</h1>
           <p className="salon-label mt-4">
-            {listError
+            {failed
               ? '— images'
               : assets.length === 0
                 ? '0 images'
@@ -94,7 +101,7 @@ export default async function MediaPage() {
         // §1.2/1.3: a plate, not a dashed card. Nothing here is a drop target,
         // so it should not draw itself as one.
         <p className="salon-plate px-6 py-16 text-center text-sm text-salon-muted">
-          {listError
+          {failed
             ? "Couldn't load your media. Reload to try again."
             : 'Nothing uploaded yet. Drag an image into a post and it lands here.'}
         </p>
