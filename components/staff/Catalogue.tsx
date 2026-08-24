@@ -41,8 +41,12 @@ import styles from './Catalogue.module.css'
  * The id goes on the <summary> and never on the <details>: the HTML
  * ancestor-details-revealing algorithm expands a closed <details> only when the
  * fragment target is INSIDE it. That is what lets a spine's `#vol-...` anchor
- * open a volume with zero script, and it gives every opened volume a URL, so
- * Back is the close gesture.
+ * open a volume with zero script, and it gives every opened volume a URL.
+ *
+ * Back is NOT the close gesture, and this comment used to say it was. The
+ * revealing algorithm is open-only — nothing in navigation or history traversal
+ * ever sets `open = false` — so Back drops the fragment and leaves the volume
+ * open. The close gestures are the summary itself and Escape.
  *
  * The book does not open on the shelf, and no fake hinge is drawn anywhere.
  * Three measurements forbid it: spines are 18-72px, so hinging the spine face

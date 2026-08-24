@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import Arrow from '@/components/staff/Arrow'
+import { PLATE, PLATE_CARD, PLATE_ROW } from '@/components/admin/plate'
 import { SHELVES, TOTAL_VOLUMES } from '@/lib/coursework'
 import { EXPERIENCE_ROLES } from '@/lib/experience'
 import { PROJECTS } from '@/lib/projects'
@@ -21,9 +22,6 @@ type Row = Pick<
 // against the plate, which is a nudge, not a state change. The hairline goes
 // from 0.14 to 0.30 alpha at the same time, so the edge of the object brightens
 // as well as its face.
-const PLATE = 'bg-salon-plate shadow-[inset_0_0_0_1px_rgba(221,238,255,0.14)]'
-const PLATE_INTERACTIVE =
-  'bg-salon-plate shadow-[inset_0_0_0_1px_rgba(221,238,255,0.14)] transition-[background-color,box-shadow] duration-[240ms] ease-[cubic-bezier(0.25,1,0.5,1)] hover:bg-salon-raised hover:shadow-[inset_0_0_0_1px_rgba(221,238,255,0.30)]'
 
 const DISPLAY = { fontFamily: 'var(--salon-font-display)' }
 const MONO = { fontFamily: 'var(--salon-font-mono)' }
@@ -116,7 +114,7 @@ export default async function Cabinet() {
             <li key={e.href}>
               <Link
                 href={e.href}
-                className={`group flex h-full items-start gap-4 px-5 py-5 salon-focus ${PLATE_INTERACTIVE}`}
+                className={`group flex h-full items-start gap-4 px-5 py-5 salon-focus ${PLATE_CARD}`}
               >
                 {/* Not --salon-subtle. The card lifts to --salon-raised on
                     hover and focus-within, where #71857A measures 2.79:1 — and
@@ -189,7 +187,7 @@ export default async function Cabinet() {
               <li key={post.id} className={i > 0 ? 'border-t border-salon-line' : ''}>
                 <Link
                   href={`/admin/posts/${post.id}`}
-                  className="salon-focus flex items-baseline gap-4 px-5 py-4 transition-[background-color,box-shadow] duration-[240ms] ease-[cubic-bezier(0.25,1,0.5,1)] hover:bg-salon-raised hover:shadow-[inset_2px_0_0_0_rgba(221,238,255,0.30)]"
+                  className={`salon-focus flex items-baseline gap-4 px-5 py-4 ${PLATE_ROW}`}
                 >
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-[15px] text-salon-ink">{post.title}</span>

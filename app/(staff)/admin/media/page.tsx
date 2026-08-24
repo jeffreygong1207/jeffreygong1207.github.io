@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { PLATE_CARD } from '@/components/admin/plate'
 import { createClient } from '@/lib/supabase/server'
 
 // Restyle only: the storage logic below is unchanged. `robots` is not exported
@@ -23,8 +24,6 @@ interface Asset {
 // Two channels: the face lifts to --salon-raised and the hairline goes 0.14 ->
 // 0.30 at the same time. `focus-within` as well as `hover`, because the anchor
 // that takes focus is inside the tile, not the tile itself.
-const TILE =
-  'bg-salon-plate shadow-[inset_0_0_0_1px_rgba(221,238,255,0.14)] transition-[background-color,box-shadow] duration-[240ms] ease-[cubic-bezier(0.25,1,0.5,1)] hover:bg-salon-raised hover:shadow-[inset_0_0_0_1px_rgba(221,238,255,0.30)] focus-within:bg-salon-raised focus-within:shadow-[inset_0_0_0_1px_rgba(221,238,255,0.30)]'
 
 function formatBytes(bytes: number): string {
   if (!bytes) return '—'
@@ -97,10 +96,10 @@ export default async function MediaPage() {
         <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
           {assets.map((asset) => (
             // §1.2: the thumbnail sits on a plate — no border, no radius, no
-            // drop shadow. `TILE` carries the §1.3 inset hairline, which is what
+            // drop shadow. `PLATE_CARD` carries the §1.3 inset hairline, which is what
             // an edge looks like on a dark ground, plus the hover and focus
             // states `.salon-plate` cannot express.
-            <li key={asset.path} className={TILE}>
+            <li key={asset.path} className={PLATE_CARD}>
               <a
                 href={asset.url}
                 target="_blank"

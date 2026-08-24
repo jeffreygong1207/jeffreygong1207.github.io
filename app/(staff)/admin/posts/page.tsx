@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { createPost } from '@/lib/actions'
 import type { Post, PostStatus } from '@/lib/types'
+import { PLATE, PLATE_ROW } from '@/components/admin/plate'
 
 type Row = Pick<
   Post,
@@ -28,22 +29,13 @@ const STATUS_DOT: Record<PostStatus, string> = {
 // #233226. Tailwind utilities rather than the unlayered `.salon-plate` class or
 // an inline style, because both of those beat a `hover:` variant on the same
 // element.
-const PLATE = 'bg-salon-plate shadow-[inset_0_0_0_1px_rgba(221,238,255,0.14)]'
 
-// Two channels on a row, not one. The lift is a small luminance step against the
-// plate; the inset left hairline gives the row a lit edge at the same time.
-// `focus-within` because the hover state lives on the <li> while the thing that
-// takes focus is the title link inside it — without this, a keyboard user lands
-// on a row that lights nothing.
-//
-// The lift surface is the token again. This row used to write out #2E3C31
-// locally because --salon-raised was #314034, where --salon-muted measures
-// 4.269:1 — under the 4.5:1 floor — so a lifted row put its own 11px metadata
-// line below AA. That override named --salon-raised itself as the durable fix,
-// and the token has since moved to exactly this value, so /admin/media and
-// /admin get the same fix rather than only this page.
-const ROW_STATE =
-  'group transition-[background-color,box-shadow] duration-[240ms] ease-[cubic-bezier(0.25,1,0.5,1)] hover:bg-salon-raised hover:shadow-[inset_2px_0_0_0_rgba(221,238,255,0.30)] focus-within:bg-salon-raised focus-within:shadow-[inset_2px_0_0_0_rgba(221,238,255,0.30)]'
+// This row used to write out its lift surface locally as #2E3C31, because
+// --salon-raised was #314034 where --salon-muted measures 4.269:1 — under the
+// 4.5:1 floor — so a lifted row put its own 11px metadata line below AA. That
+// override named --salon-raised itself as the durable fix; the token has since
+// moved to exactly this value, so /admin and /admin/media get the fix too, and
+// the row can go back to the shared constant.
 
 // The muted lines answer the lift by going to --salon-ink as well — a second
 // channel, not the thing holding the row at AA. Both use the row's curve so the
@@ -145,7 +137,7 @@ export default async function PostsIndex({
           {rows.map((post, i) => (
             <li
               key={post.id}
-              className={`flex items-center gap-4 px-4 py-4 ${ROW_STATE} ${
+              className={`flex items-center gap-4 px-4 py-4 ${PLATE_ROW} ${
                 i > 0 ? 'border-t border-salon-line' : ''
               }`}
             >
