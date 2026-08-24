@@ -186,9 +186,25 @@ function stripDiagnostics(src) {
   while ((m = head.exec(src))) {
     const start = m.index + m[0].length - 1
     let depth = 0
+    let quote = null
     for (let i = start; i < src.length; i++) {
-      if (src[i] === '(') depth++
-      else if (src[i] === ')' && --depth === 0) {
+      const ch = src[i]
+      // Parens are only structural OUTSIDE a string. Balancing without this,
+      // a diagnostic containing a stray `)` — `console.error('parse failed) x')`
+      // — ended its own blank mid-string, left the opening quote unmatched, and
+      // desynchronised the literal scanner for the whole rest of the file. Every
+      // banned string after it then went unread.
+      if (quote) {
+        if (ch === '\\') i++
+        else if (ch === quote) quote = null
+        continue
+      }
+      if (ch === "'" || ch === '"' || ch === '`') {
+        quote = ch
+        continue
+      }
+      if (ch === '(') depth++
+      else if (ch === ')' && --depth === 0) {
         for (let j = m.index; j <= i; j++) if (out[j] !== '\n') out[j] = ' '
         head.lastIndex = i + 1
         break
@@ -204,14 +220,41 @@ function stripDiagnostics(src) {
  * staff copy arrives through a variable — the entrance notes on /admin, the
  * empty-state strings — and a gate that only read JSX text would miss all of it.
  */
+/**
+ * An interpolation removed from ONE already-matched text run.
+ *
+ * The JSX text matcher used to exclude `{` and `}` from a run, so a single
+ * interpolation hid the whole text node from every rule:
+ * `<p>Drawn as a generic slate rather than a specific device, {n} times</p>`
+ * scanned as nothing, while the identical sentence without `{n}` was caught.
+ *
+ * Applied to the matched chunk rather than to the file, because a JS block is
+ * also braces: blanking every `{...}` in the source erases the function body
+ * the JSX lives in, and the text disappears again by a different route.
+ */
+function stripBraces(text) {
+  let out = ''
+  let depth = 0
+  for (const ch of text) {
+    if (ch === '{') depth++
+    else if (ch === '}') {
+      if (depth > 0) depth--
+      out += ' '
+    } else if (depth === 0) out += ch
+  }
+  return out
+}
+
 function renderedChunks(src) {
   const chunks = []
   const push = (text, index) => {
     if (text.trim()) chunks.push({ text, line: src.slice(0, index).split('\n').length })
   }
 
-  const jsxText = /(?<=>)([^<>{}]+)(?=<)/g
-  for (let m; (m = jsxText.exec(src)); ) push(m[1], m.index)
+  // Braces are no longer excluded from the run; they are removed from it after
+  // the fact, so an interpolation splits nothing.
+  const jsxText = /(?<=>)([^<>]+)(?=<)/g
+  for (let m; (m = jsxText.exec(src)); ) push(stripBraces(m[1]), m.index)
 
   const literal = /(['"`])((?:\\.|(?!\1)[\s\S])*)\1/g
   for (let m; (m = literal.exec(src)); ) push(m[2], m.index)

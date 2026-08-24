@@ -20,6 +20,16 @@ import { useEffect } from 'react'
  * Focus is only recaptured when it was inside the object being closed. Escape
  * pressed while the reader is somewhere else on the page closes the object
  * without moving them.
+ *
+ * This deliberately does NOT touch the URL. It briefly cleared a fragment that
+ * named the closing object, on two stated grounds, and neither survived: it was
+ * said to clear `:target`, which pushState/replaceState provably do not do (the
+ * stale mark is solved in Catalogue.module.css by keying it to [open]); and it
+ * was said to make a second click on the same spine reopen the volume, which
+ * happens anyway, because activating `href="#x"` while already at `#x` is still
+ * a fragment navigation and still runs the revealing algorithm. What the call
+ * did do was make each open/Escape/open cycle push a real history entry, since
+ * the URL now genuinely changed every time. Removing it costs nothing.
  */
 export default function VitrineEscape({ group }: { group: string }) {
   useEffect(() => {
@@ -35,30 +45,6 @@ export default function VitrineEscape({ group }: { group: string }) {
       ).filter((element) => element.getAttribute('name') === group)
       if (open.length === 0) return
 
-      // Drop a fragment that names something we are about to close, so that
-      // clicking the SAME spine again is a real fragment navigation rather than
-      // a re-navigation to the URL the page is already on.
-      //
-      // This does NOT clear `:target`, and must not be relied on to: per spec
-      // the document's target element is set by fragment navigation and history
-      // traversal, and pushState/replaceState do not touch it. The stale-mark
-      // problem this once claimed to fix is solved in Catalogue.module.css
-      // instead, by keying the mark to [open].
-      //
-      // decodeURIComponent throws URIError on a malformed escape — a hand-typed
-      // `#100%` is enough. Thrown here it would abort the handler before
-      // anything closed and leave Escape dead for as long as that hash survived,
-      // so a fragment we cannot read is simply a fragment we do not act on.
-      const fragment = location.hash.slice(1)
-      let targeted: HTMLElement | null = null
-      if (fragment) {
-        try {
-          targeted = document.getElementById(decodeURIComponent(fragment))
-        } catch {
-          targeted = document.getElementById(fragment)
-        }
-      }
-
       const active = document.activeElement
       for (const details of open) {
         const held = active instanceof Node && details.contains(active)
@@ -67,10 +53,6 @@ export default function VitrineEscape({ group }: { group: string }) {
         // being rendered is what keeps it off <body>.
         if (held && face) face.focus()
         details.open = false
-      }
-
-      if (targeted && open.some((details) => details.contains(targeted))) {
-        history.replaceState(null, '', `${location.pathname}${location.search}`)
       }
 
       event.preventDefault()

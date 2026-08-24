@@ -132,52 +132,98 @@ function alphaValues(raw) {
 }
 
 /**
+ * The scale factor a geometry calc() resolves to, or null if it cannot be read.
+ *
+ * The repo's idiom is `calc(var(--cr-px) * N)` and
+ * `calc(var(--cr-px) * (A + B * var(--open)))`. The right operand of the
+ * top-level `*` is evaluated at both endpoints of the interpolating var() and
+ * the larger magnitude wins, which is what orders layers against each other.
+ *
+ * The previous version took "the largest number anywhere inside" and inferred
+ * the sign from a regex, `/-\s*\d/`. That matched the minus inside
+ * `(10 - 4 * var(--open))` and read a spread of +6..+10 as -10 — the repo's own
+ * idiom with one sign changed, silently flipping an inverted stack to passing.
+ */
+function calcScale(body) {
+  const inner = body.slice(body.indexOf('(') + 1, body.lastIndexOf(')'))
+  let depth = 0
+  let star = -1
+  for (let i = 0; i < inner.length; i++) {
+    if (inner[i] === '(') depth++
+    else if (inner[i] === ')') depth--
+    else if (inner[i] === '*' && depth === 0) star = i
+  }
+  if (star === -1) return null
+  const right = inner.slice(star + 1).trim()
+
+  const bare = Number(right)
+  if (Number.isFinite(bare)) return bare
+
+  // `(A + B * var(--x))` — evaluate at x = 0 and x = 1.
+  const values = []
+  for (const end of [0, 1]) {
+    const substituted = right.replace(/var\([^()]*\)/g, String(end))
+    // Only arithmetic may survive. Anything else and we do not guess.
+    if (!/^[\d\s+\-*/.()]+$/.test(substituted)) return null
+    try {
+      const v = Function(`"use strict";return (${substituted})`)()
+      if (!Number.isFinite(v)) return null
+      values.push(v)
+    } catch {
+      return null
+    }
+  }
+  return values.reduce((a, b) => (Math.abs(b) > Math.abs(a) ? b : a))
+}
+
+/**
  * How far the layer actually reaches: `spread + blur / 2`.
  *
  * Blur alone is not the softness of a layer. Two layers can share a blur of
  * 40px and be nothing alike — at spread +8 one is a broad halo, at spread -22
  * the other is pulled into a tight core under the object, and the tight one is
  * correctly the darker of the two. Ordering on blur called that an inversion.
- * Spread is the third length when four are present.
  *
- * A calc() collapses to the largest scale factor inside it, which is enough to
- * ORDER layers against each other — every calc() here is `var(--cr-px) * n`.
+ * Returns null for ANY length it cannot read, including a spread in slot 4.
+ * Assuming `spread: 0` for an unreadable spread is how `0 10px 20px 4em` and
+ * `min(60px, 10vw)` passed as inverted stacks: three readable lengths were
+ * enough to satisfy the old length check, and the file's own promise that
+ * nothing is skipped silently was broken by its own parser.
  */
 function blurValue(layer) {
   // The colour comes off FIRST. Its alpha is routinely a calc(), and leaving it
-  // in the string let it be counted as a length: in `.disc` every geometry
-  // calc is two levels deep and so went unmatched, while the alpha calc matched
-  // and became the third "length" — every layer computed an extent of 0 and the
-  // gate degraded into "alphas must not increase in source order", passing a
-  // fully inverted stack.
+  // in the string let it be counted as a length: in `.disc` every geometry calc
+  // is two levels deep and so went unmatched, while the alpha calc matched and
+  // became the third "length" — every layer computed an extent of 0 and the
+  // gate degraded into "alphas must not increase in source order".
   let rest = stripColour(layer)
 
-  // Balanced scan, not a regex. `calc(var(--cr-px) * (2 + 2 * var(--open)))`
-  // nests two deep and the old one-level pattern could not see it.
+  // Balanced scan, not a regex: `calc(var(--cr-px) * (2 + 2 * var(--open)))`
+  // nests two deep and a one-level pattern cannot see it.
   const calcs = balancedCalls(rest, 'calc')
   calcs.forEach((c, i) => {
     rest = rest.replace(c, ` @${i} `)
   })
-  const lengths = []
-  for (const tok of rest.trim().split(/\s+/)) {
-    if (/^@\d+$/.test(tok)) {
-      const body = calcs[Number(tok.slice(1))]
-      const nums = (body.match(/[\d.]+/g) ?? []).map(Number)
-      const scale = nums.filter((v) => v > 1)
-      const mag = scale.length ? Math.max(...scale) : 0
-      // `calc(var(--cr-px) * -6)` is a negative spread; the sign matters.
-      lengths.push(/\*\s*-/.test(body) || /-\s*\d/.test(body) ? -mag : mag)
-    } else if (/^-?[\d.]+px$/.test(tok)) {
-      // Offsets are signed but their magnitude is irrelevant here; blur and
-      // spread are what set extent, and blur is never negative.
-      lengths.push(parseFloat(tok))
-    } else if (tok === '0') {
-      lengths.push(0)
-    }
+  // Other length-valued functions get a placeholder too, so that an unreadable
+  // one occupies its slot and is reported rather than vanishing.
+  for (const fn of ['min', 'max', 'clamp', 'var', 'calc']) {
+    for (const call of balancedCalls(rest, fn)) rest = rest.replace(call, ' ?? ')
   }
-  if (lengths.length < 3) return null
-  const blur = Math.abs(lengths[2])
-  const spread = lengths.length >= 4 ? lengths[3] : 0
+
+  const slots = []
+  for (const tok of rest.trim().split(/\s+/)) {
+    if (!tok) continue
+    if (/^@\d+$/.test(tok)) slots.push(calcScale(calcs[Number(tok.slice(1))]))
+    else if (/^-?[\d.]+px$/.test(tok)) slots.push(parseFloat(tok))
+    else if (/^-?[\d.]+$/.test(tok) && Number(tok) === 0) slots.push(0)
+    else slots.push(null)
+  }
+
+  if (slots.length < 3) return null
+  if (slots[2] === null) return null
+  if (slots.length >= 4 && slots[3] === null) return null
+  const blur = Math.abs(slots[2])
+  const spread = slots.length >= 4 ? slots[3] : 0
   return spread + blur / 2
 }
 
