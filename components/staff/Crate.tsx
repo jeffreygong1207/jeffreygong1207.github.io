@@ -44,7 +44,13 @@ export default function Crate() {
       {/* States what the page holds. It does not describe the label system that
           draws it — that rationale is spec 2.3 and belongs in the spec. */}
       <header className={styles.head}>
-        <h1 className="salon-h1">The Crate</h1>
+        {/* "Projects", not "The Crate". app/(staff)/admin/page.tsx states the
+            rule for the links that point here — name what is counted, so that
+            renaming the drawing leaves the words true — and a page whose own
+            title is the name of its drawing breaks it from the other end. The
+            sidebar and the index both say Projects; this was the only surface
+            that disagreed with its own navigation. */}
+        <h1 className="salon-h1">Projects</h1>
         <span className={styles.count}>{PROJECTS.length} projects</span>
       </header>
 

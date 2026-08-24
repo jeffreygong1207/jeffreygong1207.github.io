@@ -455,6 +455,23 @@ body:has(.salon-shell .salon-sheet) {
   outline: 2px solid var(--salon-accent);
   outline-offset: 2px;
 }
+
+/*
+  An accent-filled control takes an INK ring, not the accent one.
+
+  Measured: --salon-accent against an --salon-accent fill is 1.00:1 — the ring
+  and the button it surrounds are the same colour, and the only thing making the
+  ring visible at all is the 2px offset gap showing the ground through it. That
+  reads as a slightly thicker button rather than a focus state. Against that gap
+  the accent ring is 6.14:1 and --salon-ink is 12.07:1, so the ink ring doubles
+  the contrast with the one colour actually adjacent to it.
+
+  Scoped to filled controls. Everywhere else the accent ring lands on a plate or
+  the ground and is already the strongest thing on the surface.
+*/
+.salon-focus.bg-salon-accent:focus-visible {
+  outline-color: var(--salon-ink);
+}
 /* The ring follows the GROUND it lands on, which on the editor page is two
    grounds at once: `:has()` takes the shell light, but the sidebar and the
    skip link keep their dark plate inside it.
