@@ -8,6 +8,8 @@ import { PROJECTS } from '@/lib/projects'
 import { AUTHOR_TZ } from '@/app/(staff)/admin/posts/page'
 import type { Post, PostStatus } from '@/lib/types'
 
+export const metadata = { title: 'The Cabinet' }
+
 type Row = Pick<
   Post,
   'id' | 'title' | 'subtitle' | 'slug' | 'status' | 'published_at' | 'updated_at' | 'reading_minutes' | 'tags'

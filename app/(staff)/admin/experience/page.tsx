@@ -1,6 +1,8 @@
 import Slate from '@/components/staff/Slate'
 import { EXPERIENCE_ROLES } from '@/lib/experience'
 
+export const metadata = { title: 'Experience' }
+
 // A pure offline render. There is no `experience` table — the migrations have
 // no such object — so this page deliberately does not open a Supabase client.
 // The data lives in lib/experience.ts, which mirrors components/Experience.tsx.

@@ -2,6 +2,8 @@ import Link from 'next/link'
 import { PLATE_CARD } from '@/components/admin/plate'
 import { createClient } from '@/lib/supabase/server'
 
+export const metadata = { title: 'Media' }
+
 // Restyle only: the storage logic below is unchanged. `robots` is not exported
 // here any more — app/(staff)/admin/layout.tsx already sets it for the whole
 // staff area, and two exports of the same field is one place too many to keep

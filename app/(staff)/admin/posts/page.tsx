@@ -4,6 +4,8 @@ import { createPost } from '@/lib/actions'
 import type { Post, PostStatus } from '@/lib/types'
 import { PLATE, PLATE_ROW } from '@/components/admin/plate'
 
+export const metadata = { title: 'Posts' }
+
 type Row = Pick<
   Post,
   'id' | 'title' | 'subtitle' | 'slug' | 'status' | 'published_at' | 'updated_at' | 'reading_minutes' | 'tags'
