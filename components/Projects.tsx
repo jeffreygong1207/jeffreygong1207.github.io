@@ -21,22 +21,11 @@ interface Project {
 export default function Projects() {
   const projects: Project[] = [
     {
-      title: "Applied Creativity",
-      description:
-        "A small software studio I run on the side, building fast, narrow tools that take friction out of everyday work rather than adding another dashboard to check. Smart DocuStore is the first thing it shipped.",
-      technologies: [],
-      links: {
-        site: "https://appliedcreativity.vercel.app",
-      },
-    },
-    {
       title: "Smart DocuStore",
       description:
         "Chrome new-tab notepad that remembers. Promote a passage with ⌘⏎ and it is chunked, embedded, and searchable by meaning months later, with citations back to the day you wrote it.",
       technologies: ["React", "TypeScript", "Vite", "Chrome MV3", "Supabase", "Deno", "pgvector", "Groq"],
-      links: {
-        site: "https://appliedcreativity.vercel.app",
-      },
+      links: {},
     },
     {
       title: "Restauranty",

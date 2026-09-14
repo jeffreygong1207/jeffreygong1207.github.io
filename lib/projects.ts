@@ -12,13 +12,10 @@
  *     independent copy means a future change on the public side cannot silently
  *     re-hue eleven record sleeves.
  *
- * EXACTLY ELEVEN, IN THIS ORDER. Commit 1719ccb ("Add Applied Creativity to
- * Projects", on `main` at d3d8bda) prepends an "Applied Creativity" entry as the
- * FIRST element of the public array, making twelve, and adds a `site` link type.
- * That entry is deliberately EXCLUDED here: spec 2.3 pins the catalogue to
- * AC-001..AC-011 and the OKLCH ring to `H = 24 + (360/11)*n`, so adopting the
- * twelve-entry array would shift every hue by 2.7 degrees and leave the twelfth
- * project uncatalogued. Do not rebase this file onto `main` to "fix" it.
+ * EXACTLY ELEVEN, IN THIS ORDER, and the public array is eleven too. Spec 2.3
+ * pins the catalogue to AC-001..AC-011 and the OKLCH ring to
+ * `H = 24 + (360/11)*n`, so a twelfth entry on either side would shift every
+ * hue by 2.7 degrees and leave one project uncatalogued.
  *
  * If a twelfth project is ever genuinely wanted here, widen `Catalogue<T>` by
  * one slot, add the entry to PROJECTS, and add its cover spec to
@@ -33,8 +30,8 @@
  * `Cover` and `Packshot` both do `COVERS[index]` unguarded, and
  * `noUncheckedIndexedAccess` is off in tsconfig.json, so a plain `CoverSpec[]`
  * shorter than `PROJECTS` gives `spec.year` as a runtime TypeError with nothing
- * failing at build. Commit 1719ccb on `main` already adds a twelfth public
- * project, so this is a live hazard, not a hypothetical one. Typing both arrays
+ * failing at build. The public list has already grown to twelve once, so this
+ * is a real hazard, not a hypothetical one. Typing both arrays
  * as the same fixed-length tuple makes the mismatch a type error instead: add a
  * twelfth project and PROJECTS stops compiling until this type and COVERS agree.
  *
